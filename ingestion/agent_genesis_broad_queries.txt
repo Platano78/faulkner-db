@@ -1,0 +1,45 @@
+# Broad Coverage Queries for Agent Genesis Import
+# Target: 30 queries × 2000 results = 60,000 conversations (94% of 63K corpus)
+# Each query designed to capture different aspects of technical conversations
+
+# Code & Implementation (8 queries)
+code implementation
+debugging
+refactoring
+optimization
+error handling
+testing
+deployment
+configuration
+
+# Architecture & Design (8 queries)
+architecture design
+system design
+technical discussion
+design pattern
+infrastructure
+integration
+component
+module
+
+# Development Process (7 queries)
+development
+project
+workflow
+documentation
+analysis
+solution
+feature
+
+# Technology Domains (7 queries)
+database
+API
+frontend
+backend
+security
+performance
+service
+
+# Note: Each query will fetch up to 2000 results
+# Total target: 60K conversations
+# Expected unique after deduplication: 40K-50K (63-79% corpus coverage)

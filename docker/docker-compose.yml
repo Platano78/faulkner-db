@@ -1,0 +1,132 @@
+services:
+  # FalkorDB service (Redis-compatible graph database)
+  falkordb:
+    image: falkordb/falkordb:latest
+    container_name: faulkner-db-falkordb
+    ports:
+      - "${FALKORDB_PORT}:6379"  # Redis protocol
+      - "${FALKORDB_REST_PORT:-8082}:8080"  # REST API and health checks (default 8082, port 8081 reserved for llama.cpp)
+    environment:
+      - FALKORDB_MEMORY_LIMIT=${FALKORDB_MEMORY_LIMIT}
+      - FALKORDB_PERSISTENCE=${FALKORDB_PERSISTENCE}
+      - FALKORDB_LOG_LEVEL=${FALKORDB_LOG_LEVEL}
+    env_file:
+      - .env
+    labels:
+      - "com.docker.compose.project=faulkner-db"
+      - "com.faulkner.component=database"
+      - "com.faulkner.description=Graph database (Redis-compatible)"
+    volumes:
+      - ./data/falkordb:/var/lib/falkordb/data:delegated
+    networks:
+      - faulkner-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    restart: unless-stopped
+
+  # PostgreSQL service for Graphiti metadata storage
+  postgres:
+    image: postgres:15-alpine
+    container_name: faulkner-db-postgres
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_INITDB_ARGS=--encoding=UTF8
+    env_file:
+      - .env
+    labels:
+      - "com.docker.compose.project=faulkner-db"
+      - "com.faulkner.component=metadata"
+      - "com.faulkner.description=PostgreSQL metadata storage"
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data:delegated
+      - ./init-scripts:/docker-entrypoint-initdb.d:ro
+    networks:
+      - faulkner-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U graphiti"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    restart: unless-stopped
+
+  # Visualization service (FastAPI web interface)
+  visualization:
+    build: ../visualization
+    container_name: faulkner-db-visualization
+    ports:
+      - "${VISUALIZATION_PORT}:8082"  # Web visualization interface
+    depends_on:
+      falkordb:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    environment:
+      - FALKORDB_HOST=${FALKORDB_HOST}
+      - FALKORDB_PORT=${FALKORDB_PORT}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    env_file:
+      - .env
+    labels:
+      - "com.docker.compose.project=faulkner-db"
+      - "com.faulkner.component=visualization"
+      - "com.faulkner.description=Web visualization interface"
+    networks:
+      - faulkner-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8082/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 512M
+        reservations:
+          memory: 128M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    restart: unless-stopped
+
+networks:
+  faulkner-network:
+    driver: bridge
+    name: faulkner-network

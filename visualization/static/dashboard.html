@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Faulkner DB - Dashboard</title>
+    <link rel="stylesheet" href="static/css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <h1>Knowledge Dashboard</h1>
+    <div class="dashboard-grid">
+        <div class="metric-cards">
+            <div id="total-stats"></div>
+            <div id="project-stats"></div>
+        </div>
+        <div class="charts">
+            <canvas id="decisions-over-time"></canvas>
+            <canvas id="decisions-by-category"></canvas>
+            <canvas id="project-distribution"></canvas>
+        </div>
+    </div>
+    <script src="static/js/charts.js"></script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+project_paths:
+  - /home/platano/.claude/agents
+  - /mnt/c/Users/Aldwin/Desktop/AI Templates and Information
+  - /home/platano/project/.serena/memories
+  - /mnt/d/ai-workspace
+
+excluded_patterns:
+  - venv
+  - __pycache__
+  - .git
+  - node_modules
+  - ".*"
+  - dist
+  - build
+
+file_age_filter_days: null
+max_workers: 6
+deduplication:
+  enabled: true
+  mode: smart
+  similarity_threshold: 0.85

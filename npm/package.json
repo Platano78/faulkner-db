@@ -1,0 +1,38 @@
+{
+  "name": "faulkner-db-config",
+  "version": "1.0.0",
+  "description": "Configure Claude Code/Desktop to use Faulkner DB MCP server for temporal knowledge graphs",
+  "keywords": [
+    "claude",
+    "claude-code",
+    "mcp",
+    "faulkner-db",
+    "knowledge-graph",
+    "temporal-database",
+    "architectural-decisions",
+    "ai-assistant"
+  ],
+  "homepage": "https://github.com/platano78/faulkner-db#readme",
+  "bugs": {
+    "url": "https://github.com/platano78/faulkner-db/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/platano78/faulkner-db.git"
+  },
+  "license": "MIT",
+  "author": "Faulkner DB Contributors",
+  "main": "bin/setup.js",
+  "bin": {
+    "faulkner-db-config": "bin/setup.js"
+  },
+  "files": [
+    "bin/"
+  ],
+  "scripts": {
+    "postinstall": "node bin/setup.js --check-only || echo 'Run: npx faulkner-db-config setup'"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

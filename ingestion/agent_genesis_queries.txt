@@ -1,0 +1,13 @@
+# Agent Genesis Search Queries for Knowledge Extraction
+# Add one query per line. Lines starting with # are ignored.
+
+MCP server architecture
+knowledge graph design
+Docker deployment
+testing strategy
+FalkorDB integration
+Graphiti integration
+hybrid search implementation
+vector embeddings
+NetworkX graph analysis
+relationship extraction

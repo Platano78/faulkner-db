@@ -1,0 +1,51 @@
+# Everything from .gitignore plus additional excludes for npm
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv
+
+# Testing
+.pytest_cache/
+tests/
+*.test.js
+
+# Development
+.github/
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs and data
+logs/
+*.log
+*.db
+data/
+dev_context_storage/
+backups/
+reports/
+docker/data/
+
+# Development artifacts
+*SESSION_HANDOFF*.md
+*FIXES_APPLIED*.md
+*TEST_RESULTS*.md
+*VALIDATION*.md
+*COMPLETE*.md
+*REPORT*.md
+*SUMMARY*.md
+*ANALYSIS*.md
+*STATUS*.md
+*FINDINGS*.md
+monitor_*.py
+test_*.py
+tmp_*.py
+
+# Docker env
+docker/.env
+
+# Include only necessary files in npm package
+# The package.json "files" field will specify what to include

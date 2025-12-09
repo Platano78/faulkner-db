@@ -1,0 +1,76 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+*.cover
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+logs/
+*.log
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Development artifacts
+*SESSION_HANDOFF*.md
+*FIXES_APPLIED*.md
+*TEST_RESULTS*.md
+*VALIDATION*.md
+*COMPLETE*.md
+*REPORT*.md
+*SUMMARY*.md
+*ANALYSIS*.md
+*STATUS*.md
+*FINDINGS*.md
+*EXTRACTION*.md
+*OPTIMIZATION*.md
+*MIGRATION*.md
+*PROTOCOL*.md
+monitor_*.py
+test_*.py
+tmp_*.py
+
+# Docker data
+docker/data/
+docker/.env
+
+# Backups
+backups/
+*.backup.*
+
+# Data directories
+data/
+dev_context_storage/
+
+# Reports
+reports/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# MCP
+scanner_tracking.db
+
+# Zone Identifier (Windows)
+*.Zone.Identifier

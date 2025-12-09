@@ -1,0 +1,39 @@
+# Graphiti Configuration for Faulkner DB
+
+# FalkorDB Connection
+falkordb:
+  host: localhost
+  port: 6379
+  database: 0
+  password: null
+  max_connections: 50
+  timeout: 30
+
+# PostgreSQL Metadata Store
+postgres:
+  host: localhost
+  port: 5432
+  database: graphiti
+  user: graphiti
+  password: graphiti123
+  max_connections: 20
+
+# Graph Configuration
+graph:
+  default_graph_name: faulkner_knowledge_graph
+  enable_temporal_queries: true
+  enable_relationship_traversal: true
+  max_traversal_depth: 5
+
+# Performance
+performance:
+  query_cache_enabled: true
+  cache_ttl_seconds: 3600
+  batch_size: 100
+  parallel_queries: true
+
+# Logging
+logging:
+  level: INFO
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: logs/graphiti.log

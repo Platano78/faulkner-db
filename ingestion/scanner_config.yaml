@@ -1,0 +1,65 @@
+# Multi-Project Markdown Scanner Configuration
+# Faulkner DB Knowledge Graph Ingestion System
+
+# Project root directories to scan
+project_paths:
+  - /home/platano/project
+  - /mnt/d/ai-workspace/projects
+
+# Patterns to exclude from scanning
+excluded_patterns:
+  - venv
+  - __pycache__
+  - .git
+  - node_modules
+  - ".*"  # Hidden directories/files
+  - dist
+  - build
+  - target
+  - .pytest_cache
+  - .mypy_cache
+
+# File age filter (only scan files modified in last N days)
+# Set to null to scan all files regardless of age
+file_age_filter_days: null
+
+# Maximum parallel workers for file processing
+max_workers: 6
+
+# Dry run mode (show what would be scanned without processing)
+dry_run: false
+
+# Database path for scan tracking
+database_path: /home/platano/project/faulkner-db/data/scanner_tracking.db
+
+# Deduplication settings
+deduplication:
+  enabled: true
+  mode: smart  # Options: none, exact, smart
+  # Smart mode merges similar content but tracks all source files
+  similarity_threshold: 0.85  # For fuzzy matching (0.0-1.0)
+
+# Progress reporting settings
+progress:
+  enabled: true
+  verbose: true  # Show detailed file-by-file progress
+  report_interval: 10  # Update progress every N files
+
+# Content extraction settings
+extraction:
+  min_content_length: 50  # Minimum characters for extracted sections
+  max_alternatives: 5  # Maximum alternative options to extract
+  
+# Scan behavior
+scan_mode:
+  incremental: true  # Only scan new/modified files
+  resume_on_failure: true  # Resume interrupted scans
+  skip_failed_files: true  # Continue if individual files fail
+
+# Neo4j/FalkorDB connection (inherited from core config)
+# Used for storing extracted knowledge nodes
+graph_database:
+  enabled: true
+  host: localhost
+  port: 6379
+  graph_name: knowledge_graph

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Faulkner DB - Network Graph</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div id="sidebar">
+        <div class="controls-panel">
+            <h3>Controls</h3>
+            <div class="control-group">
+                <label>Layout:</label>
+                <select id="layout-selector">
+                    <option value="force">Force-Directed</option>
+                    <option value="hierarchical">Hierarchical</option>
+                    <option value="circular">Circular</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label>Node Charge:</label>
+                <input type="range" id="charge-slider" min="-500" max="-50" value="-200">
+            </div>
+            <div class="control-group">
+                <label>Link Distance:</label>
+                <input type="range" id="distance-slider" min="10" max="200" value="60">
+            </div>
+            <div class="control-group">
+                <label>Search:</label>
+                <input type="text" id="search-box" placeholder="Search nodes...">
+            </div>
+            <button id="reset-view">Reset View</button>
+            <div id="connection-status" class="status-disconnected">Disconnected</div>
+        </div>
+        <div id="details-panel" class="hidden">
+            <div id="node-details"></div>
+        </div>
+    </div>
+    
+    <div id="graph-container">
+        <div id="performance-monitor">
+            <span id="fps-counter">FPS: 60</span>
+            <span id="render-time">Render: 0ms</span>
+        </div>
+        <div id="toast-container"></div>
+    </div>
+
+    <script src="/static/js/controls.js"></script>
+    <script src="/static/js/details-panel.js"></script>
+    <script src="/static/js/network.js"></script>
+</body>
+</html>

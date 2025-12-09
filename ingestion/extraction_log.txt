@@ -1,0 +1,112 @@
+INFO:sentence_transformers.SentenceTransformer:Use pytorch device_name: cuda:0
+INFO:sentence_transformers.SentenceTransformer:Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+INFO:sentence_transformers.cross_encoder.CrossEncoder:Use pytorch device: cuda:0
+INFO:httpx:HTTP Request: POST http://localhost:8080/search "HTTP/1.0 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:8080/search "HTTP/1.0 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:8080/search "HTTP/1.0 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:8080/search "HTTP/1.0 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:8080/search "HTTP/1.0 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:8080/search "HTTP/1.0 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:8080/search "HTTP/1.0 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:8080/search "HTTP/1.0 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:8080/search "HTTP/1.0 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:8080/search "HTTP/1.0 200 OK"
+INFO:httpx:HTTP Request: POST http://100.80.229.35:1234/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://100.80.229.35:1234/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:mcp_server.utils:Tool add_decision completed in 0.001s
+INFO:httpx:HTTP Request: POST http://100.80.229.35:1234/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://100.80.229.35:1234/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://100.80.229.35:1234/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:mcp_server.utils:Tool add_decision completed in 0.001s
+INFO:httpx:HTTP Request: POST http://100.80.229.35:1234/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://100.80.229.35:1234/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://100.80.229.35:1234/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://100.80.229.35:1234/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://100.80.229.35:1234/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://100.80.229.35:1234/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://100.80.229.35:1234/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://100.80.229.35:1234/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://100.80.229.35:1234/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:mcp_server.utils:Tool add_failure completed in 0.001s
+INFO:httpx:HTTP Request: POST http://100.80.229.35:1234/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://100.80.229.35:1234/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:mcp_server.utils:Tool add_decision completed in 0.001s
+INFO:httpx:HTTP Request: POST http://100.80.229.35:1234/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://100.80.229.35:1234/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://100.80.229.35:1234/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://100.80.229.35:1234/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:mcp_server.utils:Tool add_pattern completed in 0.001s
+INFO:httpx:HTTP Request: POST http://100.80.229.35:1234/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://100.80.229.35:1234/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:mcp_server.utils:Tool add_decision completed in 0.001s
+INFO:httpx:HTTP Request: POST http://100.80.229.35:1234/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:mcp_server.utils:Tool add_decision completed in 0.001s
+INFO:httpx:HTTP Request: POST http://100.80.229.35:1234/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://100.80.229.35:1234/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://100.80.229.35:1234/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:mcp_server.utils:Tool add_decision completed in 0.001s
+INFO:httpx:HTTP Request: POST http://100.80.229.35:1234/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:mcp_server.utils:Tool add_decision completed in 0.001s
+INFO:httpx:HTTP Request: POST http://100.80.229.35:1234/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:mcp_server.utils:Tool add_failure completed in 0.001s
+INFO:httpx:HTTP Request: POST http://100.80.229.35:1234/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://100.80.229.35:1234/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://100.80.229.35:1234/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://100.80.229.35:1234/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:mcp_server.utils:Tool add_decision completed in 0.001s
+INFO:httpx:HTTP Request: POST http://100.80.229.35:1234/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:mcp_server.utils:Tool add_pattern completed in 0.001s
+INFO:httpx:HTTP Request: POST http://100.80.229.35:1234/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:mcp_server.utils:Tool add_decision completed in 0.001s
+
+======================================================================
+🚀 FULL-SCALE AGENT GENESIS EXTRACTION
+======================================================================
+Started: 2025-11-09 23:08:15
+Batch Size: 50
+Resuming from: 0 completed conversations
+Queries: 10
+
+📡 Gathering conversations from Agent Genesis...
+  Query: 'MCP server architecture...' → 10 new conversations
+  Query: 'knowledge graph design...' → 10 new conversations
+  Query: 'Docker deployment...' → 10 new conversations
+  Query: 'testing strategy...' → 10 new conversations
+  Query: 'FalkorDB integration...' → 10 new conversations
+  Query: 'Graphiti integration...' → 10 new conversations
+  Query: 'hybrid search implementation...' → 10 new conversations
+  Query: 'vector embeddings...' → 10 new conversations
+  Query: 'NetworkX graph analysis...' → 10 new conversations
+  Query: 'relationship extraction...' → 10 new conversations
+
+✅ Total unique conversations to process: 93
+
+======================================================================
+📊 EXTRACTION PROGRESS
+======================================================================
+Overall: 93/93 (100.0%) │ ETA: 0:00:00
+Rate: 3.1 convos/min │ Nodes: 13 │ Success: 14.0%
+Batch: 2/2 │ Workers: 1 active
+
+[██████████████████████████████] 100.0%
+======================================================================
+
+======================================================================
+✅ FULL-SCALE EXTRACTION COMPLETE
+======================================================================
+
+Results:
+  Conversations processed: 93
+  Decisions: 9
+  Patterns: 2
+  Failures: 2
+  Total nodes: 13
+  Success rate: 14.0%
+  Skipped: 80
+  Errors: 0
+
+Time: 0.0 hours
+Avg per conversation: 0.3s
+Completed: 2025-11-09 23:08:46
+
+Checkpoint saved: ingestion/extraction_checkpoint.json

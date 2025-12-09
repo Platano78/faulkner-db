@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "faulkner-db": {
+      "command": "/home/platano/project/faulkner-db/venv/bin/python3",
+      "args": [
+        "/home/platano/project/faulkner-db/mcp_server/server_fastmcp.py"
+      ],
+      "env": {
+        "PYTHONPATH": "/home/platano/project/faulkner-db:/home/platano/project/faulkner-db/core:/home/platano/project/faulkner-db/mcp_server"
+      }
+    }
+  }
+}
