@@ -3,6 +3,9 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python Version](https://img.shields.io/badge/python-3.8%20%7C%203.9%20%7C%203.10%20%7C%203.11-blue)](https://www.python.org/downloads/)
 [![Docker](https://img.shields.io/badge/docker-required-blue.svg)](https://docs.docker.com/get-docker/)
+[![npm version](https://img.shields.io/npm/v/faulkner-db-config.svg)](https://www.npmjs.com/package/faulkner-db-config)
+[![CI Status](https://github.com/platano78/faulkner-db/workflows/CI/badge.svg)](https://github.com/platano78/faulkner-db/actions)
+[![GitHub stars](https://img.shields.io/github/stars/platano78/faulkner-db.svg)](https://github.com/platano78/faulkner-db/stargazers)
 
 **Faulkner DB empowers software teams to capture, query, and analyze architectural decisions, implementation patterns, and failures as they evolve over time.** Built on FalkorDB (CPU-friendly graph database) with hybrid search capabilities, it provides unparalleled insights into your project's history, fostering better decision-making and reducing technical debt.
 
