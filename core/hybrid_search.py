@@ -1,5 +1,6 @@
 import asyncio
 import re
+import sys
 import time
 from datetime import datetime
 from typing import Dict, List, Tuple
@@ -160,7 +161,7 @@ async def graph_traversal(client: GraphitiClient, query_keywords: List[str], tem
                 })
         except Exception as e:
             # Log error but continue with other keywords
-            print(f"Error querying keyword '{keyword}': {e}")
+            print(f"Error querying keyword '{keyword}': {e}", file=sys.stderr)
             continue
     
     return results
@@ -277,7 +278,7 @@ async def hybrid_search(query: str, client=None) -> Tuple[List[dict], SearchMetr
     
     # Validate performance
     if metrics.total_time >= 2.0:
-        print(f"[WARNING] Search took {metrics.total_time:.2f}s, exceeds 2s target")
+        print(f"[WARNING] Search took {metrics.total_time:.2f}s, exceeds 2s target", file=sys.stderr)
     
     # Cache result
     CACHE[query] = final_results

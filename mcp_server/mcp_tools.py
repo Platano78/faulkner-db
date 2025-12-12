@@ -1,4 +1,5 @@
 import collections
+import sys
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 from uuid import uuid4
@@ -75,7 +76,7 @@ async def add_decision(
             client.connect_decisions(decision_id, related_id, "RELATES_TO")
         except Exception as e:
             # Log but don't fail if relationship creation fails
-            print(f"Warning: Could not create relationship to {related_id}: {e}")
+            print(f"Warning: Could not create relationship to {related_id}: {e}", file=sys.stderr)
 
     knowledge_growth['decisions'] += 1
 
@@ -246,7 +247,7 @@ async def find_related(
         
     except Exception as e:
         # Log error and return empty list
-        print(f"Error in find_related for node {node_id}: {e}")
+        print(f"Error in find_related for node {node_id}: {e}", file=sys.stderr)
         return []
 
 
@@ -288,11 +289,11 @@ async def get_timeline(
             datetime.fromisoformat(start_date.replace('Z', '+00:00'))
             datetime.fromisoformat(end_date.replace('Z', '+00:00'))
         except ValueError as e:
-            print(f"Invalid date format for timeline query: {start_date} to {end_date}: {e}")
+            print(f"Invalid date format for timeline query: {start_date} to {end_date}: {e}", file=sys.stderr)
             return []
 
         if start_date > end_date:
-            print(f"Invalid date range: start_date {start_date} after end_date {end_date}")
+            print(f"Invalid date range: start_date {start_date} after end_date {end_date}", file=sys.stderr)
             return []
 
         # Get client
@@ -353,13 +354,13 @@ async def get_timeline(
 
         # Log performance metrics
         execution_time = time.time() - start_time
-        print(f"Timeline query executed in {execution_time:.3f}s, returned {len(timeline)} results")
+        print(f"Timeline query executed in {execution_time:.3f}s, returned {len(timeline)} results", file=sys.stderr)
         
         return timeline
 
     except Exception as e:
         execution_time = time.time() - start_time
-        print(f"Error fetching timeline after {execution_time:.3f}s: {e}")
+        print(f"Error fetching timeline after {execution_time:.3f}s: {e}", file=sys.stderr)
         return []
 
 
