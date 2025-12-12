@@ -31,7 +31,7 @@ from mcp_server.mcp_tools import (
 # Initialize FastMCP server with MCP 2025-11-25 compliance
 mcp = FastMCP(
     name="faulkner-db",
-    version="1.1.0",
+    version="1.1.1",
 )
 
 # Tool 1: Add Decision
