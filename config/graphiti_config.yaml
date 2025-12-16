@@ -1,4 +1,5 @@
 # Graphiti Configuration for Faulkner DB
+# NOTE: Sensitive values should be set via environment variables
 
 # FalkorDB Connection
 falkordb:
@@ -10,13 +11,17 @@ falkordb:
   timeout: 30
 
 # PostgreSQL Metadata Store
+# SECURITY: Use environment variables for credentials in production
+# Set POSTGRES_PASSWORD environment variable before running
 postgres:
   host: localhost
   port: 5432
   database: graphiti
   user: graphiti
-  password: graphiti123
-  max_connections: 20
+  # Password loaded from environment variable POSTGRES_PASSWORD
+  # For local development, set: export POSTGRES_PASSWORD=your_password
+  # See docker/.env.example for Docker Compose configuration
+  password: null  # Set via POSTGRES_PASSWORD env var
 
 # Graph Configuration
 graph:
