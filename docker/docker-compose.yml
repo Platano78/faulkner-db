@@ -10,6 +10,7 @@ services:
       - FALKORDB_MEMORY_LIMIT=${FALKORDB_MEMORY_LIMIT}
       - FALKORDB_PERSISTENCE=${FALKORDB_PERSISTENCE}
       - FALKORDB_LOG_LEVEL=${FALKORDB_LOG_LEVEL}
+      - REDIS_ARGS=--appendonly yes --appendfsync everysec --save 60 1 --save 30 100
     env_file:
       - .env
     labels:
@@ -18,6 +19,8 @@ services:
       - "com.faulkner.description=Graph database (Redis-compatible)"
     volumes:
       - ./data/falkordb:/var/lib/falkordb/data:delegated
+      - ./redis.conf:/etc/redis/redis.conf:ro
+
     networks:
       - faulkner-network
     healthcheck:

@@ -4,8 +4,10 @@
 # AGENT GENESIS TO FALKORDB INCREMENTAL SYNC SCRIPT
 ################################################################################
 #
-# Purpose: Periodically sync conversations from Agent Genesis Docker ChromaDB
+# Purpose: Periodically sync conversations from Agent Genesis JSONL API
 #          to FalkorDB graph database with incremental updates
+#
+# Updated: December 2025 - Now uses Agent Genesis API instead of direct ChromaDB
 #
 # Features:
 #   - Incremental extraction (only new/changed conversations)
@@ -66,7 +68,8 @@ DRY_RUN=false
 FORCE_SYNC=false
 VERBOSE=false
 CREATE_BACKUP=true
-CONTAINER_NAME="${AG_CONTAINER_NAME:-agent-genesis-chroma}"
+CONTAINER_NAME="${AG_CONTAINER_NAME:-agent-genesis}"
+AGENT_GENESIS_API="${AG_API_URL:-http://localhost:8080}"
 
 # Paths
 STATE_DIR="$HOME/.faulkner-db"
@@ -85,7 +88,8 @@ ERROR_LOG_FILE="$ERROR_LOG_DIR/errors_${CURRENT_DATE}.log"
 # FalkorDB/Extractor config
 EXTRACTOR_SCRIPT="$INGESTION_DIR/agent_genesis_chromadb_extractor.py"
 COLLECTION_NAME="${AG_COLLECTION_NAME:-alpha_claude_code}"
-CHROMADB_PATH="/home/platano/project/agent-genesis/docker-knowledge/"
+CHROMADB_PATH="/app/knowledge"  # Path inside Docker container
+LOCAL_CHROMADB_STAGING="/tmp/faulkner-chroma-staging/knowledge"
 
 # Colors for output
 RED='\033[0;31m'
@@ -218,61 +222,37 @@ init_state() {
     debug "State file: $STATE_FILE"
 }
 
-get_chroma_message_count() {
-    # Determine which Python to use
-    local python_exe="python3"
-    if [ -f "$PROJECT_DIR/venv/bin/python" ]; then
-        python_exe="$PROJECT_DIR/venv/bin/python"
-    fi
+get_message_count() {
+    # Use Agent Genesis API to get message count (JSONL-indexed data)
+    debug "Querying Agent Genesis API for message count: $AGENT_GENESIS_API/stats"
 
-    debug "Querying ChromaDB for message count using: $python_exe"
-
-    # Python snippet to count messages in ChromaDB
-    local count
-    count=$("$python_exe" << 'PYTHON_SNIPPET'
-import sys
-import os
-from pathlib import Path
-
-try:
-    import chromadb
-    from chromadb.config import Settings
-
-    chromadb_path = os.environ.get('CHROMADB_PATH', '/home/platano/project/agent-genesis/docker-knowledge/')
-    collection_name = os.environ.get('COLLECTION_NAME', 'alpha_claude_code')
-
-    # Connect to local ChromaDB
-    client = chromadb.PersistentClient(path=chromadb_path)
-
-    try:
-        collection = client.get_collection(name=collection_name)
-        count = collection.count()
-        print(count)
-    except Exception as e:
-        print(f"ERROR: Failed to get collection: {e}", file=sys.stderr)
-        sys.exit(1)
-
-except ImportError as e:
-    print(f"ERROR: Missing required package: {e}", file=sys.stderr)
-    sys.exit(1)
-except Exception as e:
-    print(f"ERROR: {e}", file=sys.stderr)
-    sys.exit(1)
-PYTHON_SNIPPET
-)
+    local response
+    response=$(curl -s --max-time 10 "$AGENT_GENESIS_API/stats" 2>/dev/null)
     local exit_code=$?
 
-    if [ $exit_code -ne 0 ]; then
-        log "ERROR: Could not query ChromaDB" "ERROR"
+    if [ $exit_code -ne 0 ] || [ -z "$response" ]; then
+        log "ERROR: Could not connect to Agent Genesis API at $AGENT_GENESIS_API" "ERROR"
         return 1
     fi
 
-    if [ -z "$count" ]; then
-        log "ERROR: Could not query ChromaDB message count" "ERROR"
-        return 1
+    # Extract count from API response using Python
+    local count
+    count=$(echo "$response" | python3 -c "
+import sys, json
+try:
+    data = json.load(sys.stdin)
+    # Get total count from alpha collection (JSONL indexed)
+    print(data.get('alpha', {}).get('count', 0))
+except:
+    print(0)
+" 2>/dev/null)
+
+    if [ -z "$count" ] || [ "$count" = "0" ]; then
+        log "WARN: API returned zero or empty count, checking response..." "WARN"
+        debug "API Response: $response"
     fi
 
-    log "ChromaDB message count: $count" "INFO"
+    log "Agent Genesis API message count: $count" "INFO"
     echo "$count"
 }
 
@@ -294,9 +274,9 @@ write_state() {
 }
 
 update_state_after_sync() {
-    local message_count=$1
-    local sync_status=$2
-    local messages_processed=$3
+    local message_count=${1:-0}
+    local sync_status=${2:-SUCCESS}
+    local messages_processed=${3:-0}
 
     local current_state=$(read_state)
 
@@ -355,7 +335,7 @@ check_sync_needed() {
 
     # Get current message count (capture only stdout)
     local current_message_count
-    current_message_count=$( (get_chroma_message_count) 2>/dev/null | grep -o '^[0-9]\+$' | head -1)
+    current_message_count=$( (get_message_count) 2>/dev/null | grep -o '^[0-9]\+$' | head -1)
 
     if [ -z "$current_message_count" ]; then
         log "ERROR: Failed to get current message count" "ERROR"
@@ -394,38 +374,27 @@ backup_graph() {
         python_exe="$PROJECT_DIR/venv/bin/python"
     fi
 
-    # Use Python to create backup via FalkorDB client
-    "$python_exe" << PYTHON_SNIPPET
-import os
-import sys
-from pathlib import Path
-from datetime import datetime
-
-try:
-    from falkordb import FalkorDB
-
-    falkordb_host = os.environ.get('FALKORDB_HOST', 'localhost')
-    falkordb_port = int(os.environ.get('FALKORDB_PORT', 6379))
-    graph_name = os.environ.get('GRAPH_NAME', 'knowledge_graph')
-
-    # Connect to FalkorDB
-    db = FalkorDB(host=falkordb_host, port=falkordb_port, decode_responses=True)
-    graph = db.select_graph(graph_name)
-
-    # Get graph stats
-    stats = graph.query("MATCH (n) RETURN COUNT(n) as node_count").result_set
-    if stats:
-        node_count = stats[0][0]
-        print(f"Graph contains {node_count} nodes")
-
-    # Create backup using BGSAVE
-    db.bgsave()
-    print(f"Backup initiated at {datetime.now().isoformat()}")
-
-except Exception as e:
-    print(f"ERROR: Backup failed: {e}", file=sys.stderr)
-    sys.exit(1)
-PYTHON_SNIPPET
+    # Use redis-cli via Docker to create backup (BGSAVE triggers RDB snapshot)
+    # FalkorDB runs on Redis, so we use redis-cli for backup operations
+    
+    log "Triggering BGSAVE on FalkorDB..." "INFO"
+    
+    # Get node count first
+    local node_count
+    node_count=$(docker exec faulkner-db-falkordb redis-cli GRAPH.QUERY knowledge_graph "MATCH (n) RETURN count(n)" 2>/dev/null | grep -o '[0-9]\+' | head -1)
+    if [ -n "$node_count" ]; then
+        log "Graph contains $node_count nodes" "INFO"
+    fi
+    
+    # Trigger background save
+    local bgsave_result
+    bgsave_result=$(docker exec faulkner-db-falkordb redis-cli BGSAVE 2>&1)
+    
+    if echo "$bgsave_result" | grep -qi "background\|started\|ok"; then
+        log "BGSAVE initiated successfully" "SUCCESS"
+    else
+        log "BGSAVE response: $bgsave_result" "WARN"
+    fi
 
     if [ $? -ne 0 ]; then
         log "ERROR: Backup creation failed" "ERROR"
@@ -438,34 +407,30 @@ PYTHON_SNIPPET
 }
 
 copy_chroma_from_docker() {
-    log "Copying ChromaDB from Docker container..." "INFO"
+    log "Copying ChromaDB from Agent Genesis Docker container..." "INFO"
 
     mkdir -p "$CHROMA_STAGING_DIR"
 
     # Check if container is running
     if ! docker ps --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
-        log "WARN: Container '$CONTAINER_NAME' not found or not running" "WARN"
-        log "Using local ChromaDB path: $CHROMADB_PATH" "INFO"
-
-        if [ ! -d "$CHROMADB_PATH" ]; then
-            log "ERROR: ChromaDB path does not exist: $CHROMADB_PATH" "ERROR"
-            return 1
-        fi
-        return 0
+        log "ERROR: Container '$CONTAINER_NAME' not found or not running" "ERROR"
+        log "Please ensure Agent Genesis is running: docker-compose up -d" "ERROR"
+        return 1
     fi
 
-    # Copy from Docker container
+    # Copy ChromaDB from Docker container (/app/knowledge contains chroma.sqlite3)
     debug "Copying from docker://$CONTAINER_NAME:$CHROMADB_PATH to $CHROMA_STAGING_DIR"
 
     if docker cp "$CONTAINER_NAME:$CHROMADB_PATH" "$CHROMA_STAGING_DIR" 2>/dev/null; then
         log "ChromaDB copied from Docker container" "SUCCESS"
-        # Update path for extraction
-        export CHROMADB_PATH="$CHROMA_STAGING_DIR/docker-knowledge"
+        # Update path for extraction - the copied directory is named 'knowledge'
+        export CHROMADB_PATH="$LOCAL_CHROMADB_STAGING"
+        debug "Using staged ChromaDB at: $CHROMADB_PATH"
         return 0
     else
-        log "WARN: Could not copy from Docker, using local path" "WARN"
-        export CHROMADB_PATH="$CHROMADB_PATH"
-        return 0
+        log "ERROR: Could not copy ChromaDB from Docker container" "ERROR"
+        log "Container: $CONTAINER_NAME, Path: $CHROMADB_PATH" "ERROR"
+        return 1
     fi
 }
 
@@ -631,7 +596,7 @@ main() {
     fi
 
     # Get final message count
-    if ! current_count=$(get_chroma_message_count); then
+    if ! current_count=$(get_message_count); then
         log "WARN: Could not verify final message count" "WARN"
         current_count=0
     fi
