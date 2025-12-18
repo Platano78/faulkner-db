@@ -3,6 +3,7 @@
 
 import sys
 import logging
+import os
 
 # FIX: Add parent directory to path to resolve import collisions
 # When this script runs from mcp_server/, Python needs explicit path to find the mcp_server package
@@ -184,6 +185,44 @@ async def find_knowledge_gaps() -> str:
 5. Prioritize gaps by impact
 
 Provide a summary of findings and recommendations."""
+
+# ============================================================
+# STARTUP HEALTH CHECK
+# ============================================================
+
+def startup_health_check():
+    """Validate FalkorDB has data on startup. Warn if database appears empty."""
+    import redis
+    
+    try:
+        host = os.environ.get('FALKORDB_HOST', 'localhost')
+        port = int(os.environ.get('FALKORDB_PORT', 6379))
+        
+        client = redis.Redis(host=host, port=port, decode_responses=True)
+        client.ping()
+        
+        # Check node count
+        result = client.execute_command('GRAPH.QUERY', 'knowledge_graph', 'MATCH (n) RETURN count(n)')
+        # Parse result - format varies but count is usually in result[1][0][0]
+        node_count = 0
+        if result and len(result) > 1 and result[1]:
+            node_count = result[1][0][0] if result[1][0] else 0
+        
+        if node_count < 10:
+            logging.warning(f"⚠️  FAULKNER-DB HEALTH WARNING: Database appears empty or corrupted!")
+            logging.warning(f"   Node count: {node_count} (expected 1000+)")
+            logging.warning(f"   Consider restoring from backup: /home/platano/project/faulkner-db/scripts/restore_falkordb.sh")
+        else:
+            logging.info(f"✓ FalkorDB health check passed: {node_count} nodes")
+            
+    except redis.ConnectionError as e:
+        logging.error(f"✗ FalkorDB connection failed: {e}")
+        logging.error(f"  Ensure FalkorDB container is running: docker start faulkner-db-falkordb")
+    except Exception as e:
+        logging.warning(f"⚠️  FalkorDB health check error: {e}")
+
+# Run health check on import (when server starts)
+startup_health_check()
 
 if __name__ == "__main__":
     mcp.run()
