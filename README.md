@@ -26,6 +26,11 @@
 - **Docker Deployment** - One-command startup with auto-restart support
 - **CPU-Friendly** - Built on FalkorDB, no GPU required (gaming-friendly memory footprint)
 
+## 📖 Documentation
+
+- **[Integration Setup Guide](docs/INTEGRATION-SETUP.md)** - Set up Agent Genesis + Faulkner-DB sync
+- **[Contributing Guidelines](CONTRIBUTING.md)** - How to contribute
+
 ## 🚀 Quick Start
 
 ### Option 1: Automated NPM Setup (Recommended)
