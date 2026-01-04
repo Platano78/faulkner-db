@@ -319,7 +319,7 @@ For best performance on Windows with WSL2:
 
 ### 1. Keep Project in WSL2 Filesystem
 
-✅ Current location (GOOD): `/home/platano/projects/faulkner-db`  
+✅ Current location (GOOD): `/path/to/faulkner-db`  
 ❌ Avoid: `/mnt/c/Users/...` (slow cross-filesystem access)
 
 ### 2. Configure WSL2 Memory Limits

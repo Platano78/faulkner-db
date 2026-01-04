@@ -108,11 +108,12 @@ function setup() {
     }
   }
 
+  // Use placeholder paths - user must update after cloning
   config.mcpServers['faulkner-db'] = {
     command: pythonPath,
     args: ['-m', 'mcp_server.server'],
     env: {
-      PYTHONPATH: '/home/platano/project/faulkner-db',
+      PYTHONPATH: '/path/to/faulkner-db',  // Update this path after cloning
       FALKORDB_HOST: 'localhost',
       FALKORDB_PORT: '6379'
     }

@@ -22,7 +22,11 @@ if [[ ! $REPLY =~ ^[Yy]$ ]]; then
     exit 1
 fi
 
-cd /home/platano/project/faulkner-db
+# Auto-detect project root
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+PROJECT_ROOT="$( dirname "$SCRIPT_DIR" )"
+
+cd "$PROJECT_ROOT"
 
 START_TIME=$(date +%s)
 LOG_FILE="logs/complete_ingestion_$(date +%Y%m%d_%H%M%S).log"

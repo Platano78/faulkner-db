@@ -32,13 +32,13 @@
 #
 # Cron Usage:
 #   # Sync every hour
-#   0 * * * * /home/platano/project/faulkner-db/scripts/sync_agent_genesis_docker.sh >> /var/log/faulkner-sync.log 2>&1
+#   0 * * * * /path/to/faulkner-db/scripts/sync_agent_genesis_docker.sh >> /var/log/faulkner-sync.log 2>&1
 #
 #   # Sync every 6 hours
-#   0 */6 * * * /home/platano/project/faulkner-db/scripts/sync_agent_genesis_docker.sh >> /var/log/faulkner-sync.log 2>&1
+#   0 */6 * * * /path/to/faulkner-db/scripts/sync_agent_genesis_docker.sh >> /var/log/faulkner-sync.log 2>&1
 #
 #   # Sync every day at 1 AM
-#   0 1 * * * /home/platano/project/faulkner-db/scripts/sync_agent_genesis_docker.sh >> /var/log/faulkner-sync.log 2>&1
+#   0 1 * * * /path/to/faulkner-db/scripts/sync_agent_genesis_docker.sh >> /var/log/faulkner-sync.log 2>&1
 #
 # Configuration:
 #   Sync state stored in:     ~/.faulkner-db/sync_state.json

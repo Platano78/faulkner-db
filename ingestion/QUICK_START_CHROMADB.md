@@ -6,7 +6,7 @@
 
 ```bash
 # 1. Verify ChromaDB has data
-cd /home/platano/project/agent-genesis
+cd /path/to/agent-genesis
 source venv/bin/activate
 python3 -c "import chromadb; c=chromadb.PersistentClient(path='knowledge_db'); print(f'Messages: {c.get_collection(\"beta_claude_desktop\").count():,}')"
 
@@ -23,7 +23,7 @@ pip install chromadb falkordb pydantic
 ## Run Extraction (3-5 minutes)
 
 ```bash
-cd /home/platano/project/faulkner-db/ingestion
+cd /path/to/faulkner-db/ingestion
 
 # Run the extractor
 python3 agent_genesis_chromadb_extractor.py
@@ -116,7 +116,7 @@ python3 agent_genesis_chromadb_extractor.py \
 
 ## What Happens
 
-1. **Connects** to ChromaDB (`/home/platano/project/agent-genesis/knowledge_db`)
+1. **Connects** to ChromaDB (`/path/to/agent-genesis/knowledge_db`)
 2. **Extracts** 13,280 messages in batches of 1,000
 3. **Groups** messages by conversation_id (~12,000 conversations)
 4. **Analyzes** each conversation for knowledge patterns using regex

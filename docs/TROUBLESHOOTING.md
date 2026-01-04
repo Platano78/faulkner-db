@@ -106,7 +106,7 @@ sudo systemctl restart docker
 
 1. **Check container status:**
    ```bash
-   cd ~/projects/faulkner-db/docker
+   cd /path/to/faulkner-db/docker
    docker-compose ps
    docker ps --filter health=unhealthy
    ```
@@ -132,7 +132,7 @@ sudo systemctl restart docker
 
 **Quick fix - Restart unhealthy containers:**
 ```bash
-cd ~/projects/faulkner-db/docker
+cd /path/to/faulkner-db/docker
 docker-compose restart falkordb
 docker-compose restart postgres
 docker-compose restart visualization
@@ -239,7 +239,7 @@ docker-compose restart falkordb
 
 **Restart visualization service:**
 ```bash
-cd ~/projects/faulkner-db/docker
+cd /path/to/faulkner-db/docker
 docker-compose restart visualization
 
 # Wait a moment
@@ -318,7 +318,7 @@ docker-compose up -d
 
 3. **Test MCP server directly:**
    ```bash
-   cd ~/projects/faulkner-db
+   cd /path/to/faulkner-db
    python -c "from mcp_server import FaulknerMCP; print('OK')"
    ```
 
@@ -341,10 +341,10 @@ docker-compose up -d
     "faulkner-db": {
       "command": "python",
       "args": [
-        "/home/platano/projects/faulkner-db/mcp_server/server.py"
+        "/path/to/faulkner-db/mcp_server/server.py"
       ],
       "env": {
-        "PYTHONPATH": "/home/platano/projects/faulkner-db"
+        "PYTHONPATH": "/path/to/faulkner-db"
       }
     }
   }
@@ -353,7 +353,7 @@ docker-compose up -d
 
 **Reinstall MCP server:**
 ```bash
-cd ~/projects/faulkner-db
+cd /path/to/faulkner-db
 source venv/bin/activate
 pip install -e .
 
@@ -464,7 +464,7 @@ docker-compose up -d
 - Regular backups (daily recommended):
   ```bash
   # Add to crontab
-  0 2 * * * cd ~/projects/faulkner-db/docker && ./backup.sh
+  0 2 * * * cd /path/to/faulkner-db/docker && ./backup.sh
   ```
 - Test restore procedure monthly
 - Never run `docker-compose down -v` (deletes volumes!)
@@ -706,7 +706,7 @@ docker-compose exec postgres psql -U postgres -c "GRANT ALL PRIVILEGES ON DATABA
 
 **Quick Validation:**
 ```bash
-cd ~/projects/faulkner-db/docker
+cd /path/to/faulkner-db/docker
 ./validate-autostart.sh
 ```
 
@@ -730,7 +730,7 @@ curl http://localhost:8082/health
 **Emergency Reset:**
 ```bash
 # CAUTION: This deletes all data!
-cd ~/projects/faulkner-db/docker
+cd /path/to/faulkner-db/docker
 docker-compose down -v
 docker-compose up -d
 ./validate-autostart.sh

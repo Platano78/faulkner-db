@@ -1,7 +1,7 @@
 # Agent Genesis ChromaDB Extraction Report
 
 **Date:** 2025-11-29  
-**Script:** `/home/platano/project/faulkner-db/ingestion/agent_genesis_chromadb_extractor.py`  
+**Script:** `/path/to/faulkner-db/ingestion/agent_genesis_chromadb_extractor.py`  
 **Status:** ✅ **SUCCESS** (with fixes applied)
 
 ---
@@ -162,14 +162,14 @@ Agent Genesis ChromaDB
 ✅ Knowledge types (Decision, Pattern, Failure) - Validated
 
 ### File Paths
-- **Script:** `/home/platano/project/faulkner-db/ingestion/agent_genesis_chromadb_extractor.py`
-- **ChromaDB:** `/home/platano/project/agent-genesis/knowledge_db/`
-- **Logs:** `/home/platano/project/faulkner-db/chromadb_extraction.log`
+- **Script:** `/path/to/faulkner-db/ingestion/agent_genesis_chromadb_extractor.py`
+- **ChromaDB:** `/path/to/agent-genesis/knowledge_db/`
+- **Logs:** `/path/to/faulkner-db/chromadb_extraction.log`
 - **Live Log:** `/tmp/chromadb_extraction_live.log`
 
 ### Environment
-- **PYTHONPATH:** `/home/platano/project/faulkner-db`
-- **Virtual Env:** `/home/platano/project/faulkner-db/venv`
+- **PYTHONPATH:** `/path/to/faulkner-db`
+- **Virtual Env:** `/path/to/faulkner-db/venv`
 - **Python Version:** 3.x
 - **FalkorDB:** localhost:6379
 - **Graph Name:** knowledge_graph

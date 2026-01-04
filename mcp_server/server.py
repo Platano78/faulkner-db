@@ -4,9 +4,12 @@
 import asyncio
 import json
 import sys
+from pathlib import Path
 from typing import Any
 
-sys.path.insert(0, '/home/platano/project/faulkner-db')
+# Auto-detect project root for portable installation
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
 
 from mcp_server.mcp_tools import TOOL_REGISTRY
 from mcp_server.utils import get_metrics

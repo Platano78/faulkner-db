@@ -5,6 +5,7 @@ Maps structured plan sections to faulkner-db node types with deduplication.
 """
 
 import asyncio
+import os
 import re
 import sys
 import hashlib
@@ -12,7 +13,13 @@ from pathlib import Path
 from typing import List, Dict, Optional, Any
 from datetime import datetime
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
+# Auto-detect paths - no configuration needed
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+DATA_DIR = PROJECT_ROOT / 'data'
+DEFAULT_DB_PATH = DATA_DIR / 'scanner_tracking.db'
+DEFAULT_PLANS_DIR = Path.home() / '.claude' / 'plans'
+
+sys.path.insert(0, str(PROJECT_ROOT))
 
 from mcp_server.mcp_tools import add_decision, add_pattern, add_failure
 from ingestion.file_tracker import FileTracker
@@ -411,10 +418,10 @@ async def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="Extract knowledge from Claude Code plan files")
-    parser.add_argument('--plans-dir', default=str(Path.home() / '.claude' / 'plans'),
-                        help='Directory containing Claude plan files')
-    parser.add_argument('--db-path', default='/home/platano/project/faulkner-db/data/scanner_tracking.db',
-                        help='Path to file tracker database')
+    parser.add_argument('--plans-dir', default=str(DEFAULT_PLANS_DIR),
+                        help='Directory containing Claude plan files (default: ~/.claude/plans)')
+    parser.add_argument('--db-path', default=str(DEFAULT_DB_PATH),
+                        help='Path to file tracker database (default: auto-detected)')
     parser.add_argument('--dry-run', action='store_true',
                         help='Show what would be processed without making changes')
 

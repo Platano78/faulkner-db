@@ -6,6 +6,7 @@ Provides project-specific context retrieval from ingested plan files.
 
 import asyncio
 import json
+import os
 import sys
 import subprocess
 from pathlib import Path
@@ -13,7 +14,15 @@ from typing import Dict, List, Optional, Any
 from datetime import datetime
 import re
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
+# Auto-detect paths - no configuration needed
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+DATA_DIR = PROJECT_ROOT / 'data'
+DEFAULT_DB_PATH = DATA_DIR / 'scanner_tracking.db'
+DEFAULT_PLANS_DIR = Path.home() / '.claude' / 'plans'
+# Projects directory can be overridden via environment variable
+PROJECTS_DIR = Path(os.environ.get('FAULKNER_PROJECTS_DIR', PROJECT_ROOT.parent))
+
+sys.path.insert(0, str(PROJECT_ROOT))
 
 from ingestion.file_tracker import FileTracker
 
@@ -62,11 +71,12 @@ class SerenaMemorySync:
 
     def extract_project_from_plan(self, plan_content: str) -> Optional[str]:
         """Try to identify the project from plan content"""
-        # Look for project paths in the content
+        # Look for project paths in the content - generic patterns
         project_patterns = [
-            r'/home/platano/project/([^/\s]+)',
-            r'/mnt/[cd]/[^/]+/([^/\s]+)',
-            r'project[:\s]+([a-zA-Z0-9_-]+)',
+            r'/home/[^/]+/project/([^/\s]+)',  # Linux home paths
+            r'/Users/[^/]+/project/([^/\s]+)',  # macOS paths
+            r'/mnt/[cd]/[^/]+/([^/\s]+)',      # WSL mount paths
+            r'project[:\s]+([a-zA-Z0-9_-]+)',   # Generic project label
         ]
 
         for pattern in project_patterns:
@@ -169,11 +179,11 @@ class SerenaMemorySync:
             content = plan_file.read_text(encoding='utf-8', errors='ignore')
             project_name = self.extract_project_from_plan(content)
             if project_name:
-                project_path = Path(f"/home/platano/project/{project_name}")
+                project_path = PROJECTS_DIR / project_name
 
         if not project_path or not project_path.exists():
             # Use a default location for unassociated plans
-            project_path = Path("/home/platano/project/faulkner-db")
+            project_path = PROJECT_ROOT
 
         # Generate memory name from plan file
         memory_name = f"plan-{plan_file.stem}"
@@ -254,9 +264,9 @@ class SerenaMemorySync:
         print(f"\nWriting aggregated memories...")
 
         for project_name, plans in project_plans.items():
-            project_path = Path(f"/home/platano/project/{project_name}")
+            project_path = PROJECTS_DIR / project_name
             if not project_path.exists():
-                project_path = Path("/home/platano/project/faulkner-db")
+                project_path = PROJECT_ROOT
 
             # Create aggregated memory
             aggregated = self.aggregate_plans_for_project(project_name, plans)
@@ -288,10 +298,10 @@ async def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="Sync Claude plans to Serena memories")
-    parser.add_argument('--plans-dir', default=str(Path.home() / '.claude' / 'plans'),
-                        help='Directory containing Claude plan files')
-    parser.add_argument('--db-path', default='/home/platano/project/faulkner-db/data/scanner_tracking.db',
-                        help='Path to file tracker database')
+    parser.add_argument('--plans-dir', default=str(DEFAULT_PLANS_DIR),
+                        help='Directory containing Claude plan files (default: ~/.claude/plans)')
+    parser.add_argument('--db-path', default=str(DEFAULT_DB_PATH),
+                        help='Path to file tracker database (default: auto-detected)')
     parser.add_argument('--project', help='Target project path (optional)')
 
     args = parser.parse_args()

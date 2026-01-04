@@ -1,10 +1,14 @@
 #!/bin/bash
 # Faulkner-DB Backup Script
-# Run daily via cron: 0 3 * * * /home/platano/project/faulkner-db/scripts/backup-faulkner.sh
+# Run daily via cron: 0 3 * * * /path/to/faulkner-db/scripts/backup-faulkner.sh
 
 set -euo pipefail
 
-BACKUP_DIR="/home/platano/project/faulkner-db/backups"
+# Auto-detect project root
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+PROJECT_ROOT="$( dirname "$SCRIPT_DIR" )"
+
+BACKUP_DIR="${FAULKNER_BACKUP_DIR:-$PROJECT_ROOT/backups}"
 LOG_FILE="/tmp/faulkner-backup.log"
 RETENTION_COUNT=7
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
@@ -36,7 +40,7 @@ docker exec faulkner-db-falkordb redis-cli BGSAVE 2>/dev/null || true
 sleep 2  # Wait for BGSAVE to complete
 
 # Copy the RDB file from the data directory
-if cp ~/project/faulkner-db/docker/data/falkordb/dump.rdb "$FALKOR_BACKUP" 2>/dev/null; then
+if cp "$PROJECT_ROOT/docker/data/falkordb/dump.rdb" "$FALKOR_BACKUP" 2>/dev/null; then
     log "FalkorDB backup created: $FALKOR_BACKUP ($(ls -lh "$FALKOR_BACKUP" | awk '{print $5}'))"
 else
     # Try copying from container if bind mount doesn't have it
@@ -50,7 +54,7 @@ fi
 # 3. Local SQLite files backup
 log "Backing up local SQLite files..."
 SQLITE_BACKUP="$BACKUP_DIR/sqlite-$TIMESTAMP.tar.gz"
-if tar czf "$SQLITE_BACKUP" -C ~/project/faulkner-db/data . 2>/dev/null; then
+if tar czf "$SQLITE_BACKUP" -C "$PROJECT_ROOT/data" . 2>/dev/null; then
     log "SQLite backup created: $SQLITE_BACKUP ($(ls -lh "$SQLITE_BACKUP" | awk '{print $5}'))"
 else
     log "WARNING: SQLite backup failed"

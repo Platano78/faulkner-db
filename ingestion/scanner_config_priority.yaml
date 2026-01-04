@@ -1,8 +1,13 @@
+# Priority Scanner Configuration
+# For high-priority knowledge sources (agents, templates, memories)
+#
+# Path Configuration:
+# - Use "auto" for automatic detection
+# - Paths starting with ~ will be expanded to user home
+
 project_paths:
-  - /home/platano/.claude/agents
-  - /mnt/c/Users/Aldwin/Desktop/AI Templates and Information
-  - /home/platano/project/.serena/memories
-  - /mnt/d/ai-workspace
+  - ~/.claude/agents
+  - ~/.claude/plans
 
 excluded_patterns:
   - venv

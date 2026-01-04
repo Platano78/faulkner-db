@@ -30,7 +30,7 @@ Estimated Remaining: 8-10 hours (if no optimization)
 
 ```bash
 # Test batching on a small sample
-cd /home/platano/project/faulkner-db
+cd /path/to/faulkner-db
 source venv/bin/activate
 
 # Run a small test
@@ -84,7 +84,7 @@ kill -TERM <PID>  # If you know the process ID
 ### Launch Optimized Extraction
 
 ```bash
-cd /home/platano/project/faulkner-db
+cd /path/to/faulkner-db
 source venv/bin/activate
 
 # Deploy optimized version

@@ -5,7 +5,7 @@
 ### Step 1: Install Python Dependencies
 
 ```bash
-cd ~/projects/faulkner-db
+cd /path/to/faulkner-db
 pip install -r requirements.txt
 ```
 
@@ -37,7 +37,7 @@ faulkner-db-postgres    Up (healthy)
 ### Step 4: Run MCP Server
 
 ```bash
-cd ~/projects/faulkner-db/mcp_server
+cd /path/to/faulkner-db/mcp_server
 python server.py
 ```
 
@@ -50,7 +50,7 @@ Available tools: ['add_decision', 'query_decisions', ...]
 ## 🧪 Running Tests
 
 ```bash
-cd ~/projects/faulkner-db
+cd /path/to/faulkner-db
 
 # Run all tests
 pytest tests/ -v
@@ -141,7 +141,7 @@ Edit `config/mcp_config.json`:
 ## 🛑 Stopping Services
 
 ```bash
-cd ~/projects/faulkner-db/docker
+cd /path/to/faulkner-db/docker
 ./stop.sh
 ```
 
@@ -162,7 +162,7 @@ docker-compose restart
 pip install -r requirements.txt
 
 # Check Python path
-export PYTHONPATH=/home/platano/projects/faulkner-db:$PYTHONPATH
+export PYTHONPATH=/path/to/faulkner-db:$PYTHONPATH
 ```
 
 ### MCP server errors

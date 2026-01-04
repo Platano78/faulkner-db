@@ -35,7 +35,7 @@
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ChromaDB Location:
-  Path: /home/platano/project/agent-genesis/knowledge_db/
+  Path: /path/to/agent-genesis/knowledge_db/
   Collection: beta_claude_desktop
   Messages: 13,280 (verified)
   Conversations: ~12,000 (estimated)
@@ -78,7 +78,7 @@ FAILURES:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 STEP 1: Verify Prerequisites (30 seconds)
-  cd /home/platano/project/agent-genesis
+  cd /path/to/agent-genesis
   source venv/bin/activate
   python3 -c "import chromadb; c=chromadb.PersistentClient(path='knowledge_db'); print(f'Messages: {c.get_collection(\"beta_claude_desktop\").count()}')"
   # Expected: Messages: 13280
@@ -87,7 +87,7 @@ STEP 1: Verify Prerequisites (30 seconds)
   # Expected: PONG
 
 STEP 2: Run Extraction (5-10 minutes)
-  cd /home/platano/project/faulkner-db/ingestion
+  cd /path/to/faulkner-db/ingestion
   python3 agent_genesis_chromadb_extractor.py
 
 STEP 3: Verify Results
@@ -147,7 +147,7 @@ Expected: 3/3 tests passed
 📁 FILE LOCATIONS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-/home/platano/project/faulkner-db/ingestion/
+/path/to/faulkner-db/ingestion/
 ├── agent_genesis_chromadb_extractor.py    (528 lines) Main script
 ├── test_chromadb_extractor.py             (148 lines) Test suite
 ├── CHROMADB_EXTRACTOR_README.md           (9.7K)     Full docs
@@ -186,7 +186,7 @@ Dependencies verified.
 Documentation complete.
 
 Execute when ready:
-  cd /home/platano/project/faulkner-db/ingestion
+  cd /path/to/faulkner-db/ingestion
   python3 agent_genesis_chromadb_extractor.py
 
 ╔═══════════════════════════════════════════════════════════════════════════╗

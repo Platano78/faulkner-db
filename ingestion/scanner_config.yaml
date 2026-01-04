@@ -1,15 +1,20 @@
 # Multi-Project Markdown Scanner Configuration
 # Faulkner DB Knowledge Graph Ingestion System
+#
+# Path Configuration:
+# - Use "auto" for automatic detection based on script location
+# - Use "~" prefix for user home directory (e.g., ~/.claude/plans)
+# - Use absolute paths for custom locations
 
 # Project root directories to scan
-project_paths:
-  - /home/platano/project
-  - /mnt/d/ai-workspace/projects
+# Set to "auto" to scan the parent directory of faulkner-db
+project_paths: auto
 
 # Claude Code plan files directory
 claude_plans:
   enabled: true
-  path: /home/platano/.claude/plans
+  # Default: ~/.claude/plans (auto-detected)
+  path: auto
   # Extract all sections from Claude plans
   extract_all_sections: true
   # Consolidate/deduplicate similar plans
@@ -39,7 +44,8 @@ max_workers: 6
 dry_run: false
 
 # Database path for scan tracking
-database_path: /home/platano/project/faulkner-db/data/scanner_tracking.db
+# Set to "auto" for automatic detection (PROJECT_ROOT/data/scanner_tracking.db)
+database_path: auto
 
 # Deduplication settings
 deduplication:
@@ -58,7 +64,7 @@ progress:
 extraction:
   min_content_length: 50  # Minimum characters for extracted sections
   max_alternatives: 5  # Maximum alternative options to extract
-  
+
 # Scan behavior
 scan_mode:
   incremental: true  # Only scan new/modified files

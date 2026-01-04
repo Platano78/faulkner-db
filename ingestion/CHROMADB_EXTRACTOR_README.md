@@ -9,7 +9,7 @@ This script extracts 13,280+ conversations from Agent Genesis ChromaDB (`beta_cl
 ## Features
 
 ### 1. ChromaDB Connection
-- Connects to persistent ChromaDB at `/home/platano/project/agent-genesis/knowledge_db/`
+- Connects to persistent ChromaDB at `/path/to/agent-genesis/knowledge_db/`
 - Accesses `beta_claude_desktop` collection (13,280 messages)
 - Batch extraction with configurable batch sizes (default: 1000)
 
@@ -64,7 +64,7 @@ redis-cli PING  # If running standalone
 ### Verify ChromaDB Data
 
 ```bash
-cd /home/platano/project/agent-genesis
+cd /path/to/agent-genesis
 source venv/bin/activate
 
 python3 -c "
@@ -82,7 +82,7 @@ Expected output: `Messages: 13,280`
 ### Basic Execution
 
 ```bash
-cd /home/platano/project/faulkner-db/ingestion
+cd /path/to/faulkner-db/ingestion
 
 # Run with defaults
 python3 agent_genesis_chromadb_extractor.py
@@ -127,7 +127,7 @@ python3 agent_genesis_chromadb_extractor.py \
 ### Run Validation Tests
 
 ```bash
-cd /home/platano/project/faulkner-db/ingestion
+cd /path/to/faulkner-db/ingestion
 
 # Run test suite
 python3 test_chromadb_extractor.py
@@ -168,7 +168,7 @@ RESULTS: 3/3 tests passed
 ================================================================================
 AGENT GENESIS CHROMADB EXTRACTOR
 ================================================================================
-2025-11-29 01:00:00 - Connecting to ChromaDB at /home/platano/project/agent-genesis/knowledge_db
+2025-11-29 01:00:00 - Connecting to ChromaDB at /path/to/agent-genesis/knowledge_db
 2025-11-29 01:00:01 - Connected to collection 'beta_claude_desktop' with 13,280 documents
 2025-11-29 01:00:01 - Stage 1: Extracting messages from ChromaDB...
 2025-11-29 01:00:05 - Progress: 5,000/13,280 messages processed, 4,500 conversations found
@@ -320,10 +320,10 @@ Progress: 5,432 conversations processed
 
 ```bash
 # Check ChromaDB exists
-ls -la /home/platano/project/agent-genesis/knowledge_db/
+ls -la /path/to/agent-genesis/knowledge_db/
 
 # Verify collection
-cd /home/platano/project/agent-genesis
+cd /path/to/agent-genesis
 source venv/bin/activate
 python3 -c "import chromadb; client = chromadb.PersistentClient(path='knowledge_db'); print(client.list_collections())"
 ```

@@ -74,3 +74,6 @@ scanner_tracking.db
 
 # Zone Identifier (Windows)
 *.Zone.Identifier
+
+# Serena project memories (local)
+.serena/

@@ -1,14 +1,18 @@
 #!/bin/bash
 # Faulkner-DB Health Check Script
-# Run every 5 minutes via cron: */5 * * * * /home/platano/project/faulkner-db/scripts/health-check-faulkner.sh
+# Run every 5 minutes via cron: */5 * * * * /path/to/faulkner-db/scripts/health-check-faulkner.sh
 
 set -euo pipefail
+
+# Auto-detect project root
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+PROJECT_ROOT="$( dirname "$SCRIPT_DIR" )"
 
 LOG_FILE="/tmp/faulkner-health.log"
 POSTGRES_CONTAINER="faulkner-db-postgres"
 FALKORDB_CONTAINER="faulkner-db-falkordb"
-BACKUP_DIR="/home/platano/project/faulkner-db/backups"
-BACKUP_SCRIPT="/home/platano/project/faulkner-db/scripts/backup-faulkner.sh"
+BACKUP_DIR="$PROJECT_ROOT/backups"
+BACKUP_SCRIPT="$PROJECT_ROOT/scripts/backup-faulkner.sh"
 
 log() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" >> "$LOG_FILE"

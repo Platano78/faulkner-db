@@ -1,6 +1,7 @@
 #!/bin/bash
 # Setup Script for Bi-Weekly Claude Plan Ingestion
 # Provides options for systemd timer or cron
+# All paths are auto-detected - no configuration needed
 
 set -e
 
@@ -10,6 +11,12 @@ PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 echo "=========================================="
 echo "Claude Plan Ingestion Scheduler Setup"
 echo "=========================================="
+echo ""
+echo "Detected paths:"
+echo "  Project: $PROJECT_DIR"
+echo "  Scripts: $SCRIPT_DIR"
+echo "  User:    $USER"
+echo "  Home:    $HOME"
 echo ""
 
 # Make the main script executable
@@ -27,9 +34,32 @@ case $choice in
         echo ""
         echo "Setting up systemd timer..."
 
-        # Copy service and timer to user systemd directory
+        # Create user systemd directory
         mkdir -p ~/.config/systemd/user
-        cp "$SCRIPT_DIR/plan-ingestion.service" ~/.config/systemd/user/
+
+        # Generate service file with correct paths
+        cat > ~/.config/systemd/user/plan-ingestion.service << EOF
+[Unit]
+Description=Claude Plan Ingestion Service
+Documentation=https://github.com/Platano78/faulkner-db
+After=network.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=$PROJECT_DIR
+ExecStart=$SCRIPT_DIR/scheduled_plan_ingestion.sh
+StandardOutput=journal
+StandardError=journal
+
+# Resource limits
+MemoryMax=2G
+CPUQuota=50%
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+        # Copy timer file
         cp "$SCRIPT_DIR/plan-ingestion.timer" ~/.config/systemd/user/
 
         # Reload systemd and enable timer
@@ -80,9 +110,8 @@ case $choice in
         echo "OPTION 1: Systemd Timer"
         echo "=========================================="
         echo ""
-        echo "Copy these files to ~/.config/systemd/user/:"
-        echo "  - $SCRIPT_DIR/plan-ingestion.service"
-        echo "  - $SCRIPT_DIR/plan-ingestion.timer"
+        echo "Run this script with option 1 to auto-generate service files"
+        echo "Or manually create ~/.config/systemd/user/plan-ingestion.service"
         echo ""
         echo "Then run:"
         echo "  systemctl --user daemon-reload"

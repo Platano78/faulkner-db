@@ -1,11 +1,15 @@
 #!/bin/bash
 
 # Daily incremental sync - add to crontab
-# Suggested: 0 1 * * * /home/platano/project/faulkner-db/scripts/daily_sync.sh
+# Suggested: 0 1 * * * /path/to/faulkner-db/scripts/daily_sync.sh
 
 set -e
 
-cd /home/platano/project/faulkner-db
+# Auto-detect project root
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+PROJECT_ROOT="$( dirname "$SCRIPT_DIR" )"
+
+cd "$PROJECT_ROOT"
 
 LOG_FILE="logs/daily_sync_$(date +%Y%m%d).log"
 mkdir -p logs

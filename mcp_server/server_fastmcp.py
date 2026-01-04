@@ -5,9 +5,11 @@ import sys
 import logging
 import os
 
-# FIX: Add parent directory to path to resolve import collisions
+# FIX: Auto-detect project root for portable installation
 # When this script runs from mcp_server/, Python needs explicit path to find the mcp_server package
-sys.path.insert(0, '/home/platano/project/faulkner-db')
+from pathlib import Path
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
 
 from fastmcp import FastMCP
 
@@ -211,7 +213,7 @@ def startup_health_check():
         if node_count < 10:
             logging.warning(f"⚠️  FAULKNER-DB HEALTH WARNING: Database appears empty or corrupted!")
             logging.warning(f"   Node count: {node_count} (expected 1000+)")
-            logging.warning(f"   Consider restoring from backup: /home/platano/project/faulkner-db/scripts/restore_falkordb.sh")
+            logging.warning(f"   Consider restoring from backup: {PROJECT_ROOT}/scripts/restore_falkordb.sh")
         else:
             logging.info(f"✓ FalkorDB health check passed: {node_count} nodes")
             

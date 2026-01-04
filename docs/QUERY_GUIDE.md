@@ -9,7 +9,7 @@ A practical guide to querying your knowledge graph for decisions, patterns, and 
 ### Python REPL (Recommended)
 
 ```bash
-cd /home/platano/project/faulkner-db
+cd /path/to/faulkner-db
 source venv/bin/activate
 python3
 ```

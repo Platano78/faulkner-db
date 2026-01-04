@@ -5,7 +5,11 @@ echo "FAULKNER DB - FINAL VALIDATION"
 echo "======================================================================"
 echo ""
 
-cd /home/platano/project/faulkner-db
+# Auto-detect project root
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+PROJECT_ROOT="$( dirname "$SCRIPT_DIR" )"
+
+cd "$PROJECT_ROOT"
 
 # Test MCP tools
 echo "[1/4] Testing MCP Tools..."

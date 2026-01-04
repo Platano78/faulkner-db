@@ -10,14 +10,17 @@ import re
 from pathlib import Path
 from typing import List, Dict, Optional
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
+# Auto-detect project root
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+sys.path.insert(0, str(PROJECT_ROOT))
 
 from mcp_server.mcp_tools import add_decision, add_pattern, add_failure
 
 
 class MarkdownScanner:
-    def __init__(self):
-        self.project_dir = Path("/home/platano/project/faulkner-db")
+    def __init__(self, project_dir: Path = None):
+        self.project_dir = project_dir or PROJECT_ROOT
         self.decisions_found = 0
         self.patterns_found = 0
         self.failures_found = 0

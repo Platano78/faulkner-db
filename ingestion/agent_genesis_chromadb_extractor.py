@@ -63,7 +63,7 @@ class AgentGenesisExtractor:
 
     def __init__(
         self,
-        chromadb_path: str = "/home/platano/project/agent-genesis/docker-knowledge/",
+        chromadb_path: str = None,
         collection_name: str = "alpha_claude_code",
         falkordb_host: str = "localhost",
         falkordb_port: int = 6379,
@@ -80,7 +80,11 @@ class AgentGenesisExtractor:
             falkordb_port: FalkorDB port
             graph_name: FalkorDB graph name
         """
-        self.chromadb_path = chromadb_path
+        # Auto-detect ChromaDB path if not provided
+        self.chromadb_path = chromadb_path or os.environ.get(
+            'AG_CHROMADB_PATH',
+            str(Path.home() / 'project' / 'agent-genesis' / 'docker-knowledge')
+        )
         self.collection_name = collection_name
         self.falkordb_host = falkordb_host
         self.falkordb_port = falkordb_port
@@ -524,10 +528,16 @@ def main():
     parser = argparse.ArgumentParser(
         description="Extract Agent Genesis conversations from ChromaDB to FalkorDB"
     )
+    # Auto-detect default path
+    default_chromadb_path = os.environ.get(
+        'AG_CHROMADB_PATH',
+        str(Path.home() / 'project' / 'agent-genesis' / 'docker-knowledge')
+    )
+
     parser.add_argument(
         '--chromadb-path',
-        default="/home/platano/project/agent-genesis/docker-knowledge/",
-        help="Path to Agent Genesis ChromaDB storage (default: Docker copy with 52K+ messages)"
+        default=default_chromadb_path,
+        help=f"Path to Agent Genesis ChromaDB storage (default: {default_chromadb_path})"
     )
     parser.add_argument(
         '--collection',

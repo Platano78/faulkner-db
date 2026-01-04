@@ -5,6 +5,7 @@ No complex project discovery - just recursive glob.
 """
 
 import sys
+import os
 from pathlib import Path
 from typing import List
 import uuid
@@ -119,13 +120,17 @@ def main():
     print("=" * 70)
     print(f"Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
 
-    # Target paths
+    # Target paths - auto-detect from environment or use sensible defaults
+    home = Path.home()
     paths = [
-        "/home/platano/.claude/agents",
-        "/mnt/c/Users/Aldwin/Desktop/AI Templates and Information",
-        "/home/platano/project/.serena/memories",
-        "/mnt/d/ai-workspace"
+        str(home / '.claude' / 'agents'),
+        str(home / 'project' / '.serena' / 'memories'),
     ]
+
+    # Add additional paths from environment variable if set
+    extra_paths = os.environ.get('FAULKNER_SCAN_PATHS', '')
+    if extra_paths:
+        paths.extend(extra_paths.split(':'))
 
     # Initialize
     graphiti_client = GraphitiClient()
