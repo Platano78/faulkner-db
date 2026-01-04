@@ -6,6 +6,15 @@ project_paths:
   - /home/platano/project
   - /mnt/d/ai-workspace/projects
 
+# Claude Code plan files directory
+claude_plans:
+  enabled: true
+  path: /home/platano/.claude/plans
+  # Extract all sections from Claude plans
+  extract_all_sections: true
+  # Consolidate/deduplicate similar plans
+  consolidate_duplicates: true
+
 # Patterns to exclude from scanning
 excluded_patterns:
   - venv

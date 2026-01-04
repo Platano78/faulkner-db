@@ -1,0 +1,19 @@
+[Unit]
+Description=Claude Plan Ingestion Service
+Documentation=https://github.com/platano/faulkner-db
+After=network.target
+
+[Service]
+Type=oneshot
+User=platano
+WorkingDirectory=/home/platano/project/faulkner-db
+ExecStart=/home/platano/project/faulkner-db/scripts/scheduled_plan_ingestion.sh
+StandardOutput=journal
+StandardError=journal
+
+# Resource limits
+MemoryMax=2G
+CPUQuota=50%
+
+[Install]
+WantedBy=multi-user.target

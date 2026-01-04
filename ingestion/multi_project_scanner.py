@@ -16,6 +16,8 @@ from ingestion.file_tracker import FileTracker
 from ingestion.project_registry import ProjectRegistry
 from ingestion.deduplication import DeduplicationEngine, SmartDeduplicator
 from ingestion.markdown_scanner import MarkdownScanner
+from ingestion.claude_plan_extractor import ClaudePlanExtractor
+from ingestion.serena_memory_sync import SerenaMemorySync
 from core.graphiti_client import GraphitiClient
 
 logger = logging.getLogger(__name__)
@@ -43,26 +45,52 @@ class MultiProjectScanner:
         self.deduplicator = SmartDeduplicator(self.dedup_engine, self.graphiti_client)
     
     async def run_scan(self) -> Dict[str, int]:
-        """Run scan across all projects"""
+        """Run scan across all projects including Claude plans"""
         print("\n" + "="*60)
         print("MULTI-PROJECT MARKDOWN SCANNER")
         print("="*60 + "\n")
-        
+
+        results = {}
+
+        # Scan Claude plans if configured
+        claude_config = self.config.get('claude_plans', {})
+        if claude_config.get('enabled', False):
+            plans_path = Path(claude_config.get('path', Path.home() / '.claude' / 'plans'))
+            if plans_path.exists():
+                print("Scanning Claude Code plans...")
+                plan_results = await self.scan_claude_plans(plans_path)
+                results['claude-plans'] = plan_results.get('stats', {}).get('files_processed', 0)
+                print(f"  Processed {results['claude-plans']} plan files\n")
+
+                # Sync to Serena memories
+                print("Syncing plans to Serena memories...")
+                await self.sync_plans_to_serena(plans_path)
+
+        # Scan regular projects
         projects = self.registry.discover_projects()
         print(f"Found {len(projects)} projects\n")
-        
-        results = {}
+
         for project_id, project_path in projects.items():
             print(f"Scanning: {project_id}...")
             count = await self.scan_project(project_id, project_path)
             results[project_id] = count
             print(f"  Processed {count} files\n")
-        
+
         print("="*60)
-        print(f"COMPLETED: {sum(results.values())} files across {len(results)} projects")
+        print(f"COMPLETED: {sum(results.values())} files across {len(results)} sources")
         print("="*60 + "\n")
-        
+
         return results
+
+    async def scan_claude_plans(self, plans_path: Path) -> Dict:
+        """Scan Claude Code plan files using specialized extractor"""
+        extractor = ClaudePlanExtractor(self.tracker)
+        return await extractor.scan_plans_directory(plans_path)
+
+    async def sync_plans_to_serena(self, plans_path: Path) -> Dict:
+        """Sync Claude plans to Serena memories per project"""
+        syncer = SerenaMemorySync(self.tracker)
+        return await syncer.sync_all_plans(plans_path)
     
     async def scan_project(self, project_id: str, project_path: Path) -> int:
         """Scan single project using markdown_scanner logic"""

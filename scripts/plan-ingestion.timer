@@ -1,0 +1,13 @@
+[Unit]
+Description=Bi-weekly Claude Plan Ingestion Timer
+Documentation=https://github.com/platano/faulkner-db
+
+[Timer]
+# Run every two weeks on Sunday at 3:00 AM
+OnCalendar=Sun *-*-1,15 03:00:00
+# Also run 15 minutes after boot if a scheduled run was missed
+Persistent=true
+RandomizedDelaySec=300
+
+[Install]
+WantedBy=timers.target
