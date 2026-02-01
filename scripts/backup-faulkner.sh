@@ -35,9 +35,10 @@ fi
 log "Backing up FalkorDB..."
 FALKOR_BACKUP="$BACKUP_DIR/falkordb-$TIMESTAMP.rdb"
 
-# Trigger background save
-docker exec faulkner-db-falkordb redis-cli BGSAVE 2>/dev/null || true
-sleep 2  # Wait for BGSAVE to complete
+# Trigger background save (with password auth - security update 2026-02-01)
+FALKORDB_PASSWORD="${FALKORDB_PASSWORD:-faulkner_kg_2026_secure}"
+docker exec faulkner-db-falkordb redis-cli -a "$FALKORDB_PASSWORD" BGSAVE 2>/dev/null || true
+sleep 3  # Wait for BGSAVE to complete
 
 # Copy the RDB file from the data directory
 if cp "$PROJECT_ROOT/docker/data/falkordb/dump.rdb" "$FALKOR_BACKUP" 2>/dev/null; then
