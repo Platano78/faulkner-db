@@ -77,3 +77,21 @@ scanner_tracking.db
 
 # Serena project memories (local)
 .serena/
+
+# Claude Code local settings
+.claude/
+
+# Handoff documents (personal context)
+HANDOFF*.md
+*HANDOFF*.md
+
+# IDE-specific configs
+claude_desktop_config.json
+
+# Standalone test/debug scripts (not in tests/)
+test_mcp_startup.sh
+comprehensive_mcp_test.py
+
+# Checkpoint/state files
+*checkpoint*.json
+*_state.json
