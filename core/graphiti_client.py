@@ -30,10 +30,20 @@ class MetricsCollector:
 
 class FalkorDBAdapter:
     """Real FalkorDB adapter using official falkordb library"""
-    def __init__(self, host='localhost', port=6379, graph_name='knowledge_graph', pool_size=10):
+    def __init__(self, host=None, port=None, graph_name='knowledge_graph', pool_size=10, password=None):
+        import os
         from falkordb import FalkorDB
-        
-        self.db = FalkorDB(host=host, port=port)
+
+        # Use environment variables as defaults (security update 2026-02-01)
+        host = host or os.environ.get('FALKORDB_HOST', 'localhost')
+        port = port or int(os.environ.get('FALKORDB_PORT', 6380))
+        password = password or os.environ.get('FALKORDB_PASSWORD')
+
+        # Support password authentication
+        if password:
+            self.db = FalkorDB(host=host, port=port, password=password)
+        else:
+            self.db = FalkorDB(host=host, port=port)
         self.graph = self.db.select_graph(graph_name)
         
     def create_node(self, node_data: Dict[str, Any]) -> str:

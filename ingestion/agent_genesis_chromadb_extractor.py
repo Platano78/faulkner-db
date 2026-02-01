@@ -66,7 +66,8 @@ class AgentGenesisExtractor:
         chromadb_path: str = None,
         collection_name: str = "alpha_claude_code",
         falkordb_host: str = "localhost",
-        falkordb_port: int = 6379,
+        falkordb_port: int = 6380,
+        falkordb_password: str = None,
         graph_name: str = "knowledge_graph",
         additive: bool = False
     ):
@@ -88,6 +89,7 @@ class AgentGenesisExtractor:
         self.collection_name = collection_name
         self.falkordb_host = falkordb_host
         self.falkordb_port = falkordb_port
+        self.falkordb_password = falkordb_password or os.environ.get('FALKORDB_PASSWORD')
         self.graph_name = graph_name
         self.additive = additive
 
@@ -558,8 +560,13 @@ def main():
     parser.add_argument(
         '--falkordb-port',
         type=int,
-        default=6379,
-        help="FalkorDB port"
+        default=int(os.environ.get('FALKORDB_PORT', 6380)),
+        help="FalkorDB port (default: 6380 or FALKORDB_PORT env var)"
+    )
+    parser.add_argument(
+        '--falkordb-password',
+        default=os.environ.get('FALKORDB_PASSWORD'),
+        help="FalkorDB password (default: FALKORDB_PASSWORD env var)"
     )
     parser.add_argument(
         '--graph-name',
@@ -575,6 +582,7 @@ def main():
         collection_name=args.collection,
         falkordb_host=args.falkordb_host,
         falkordb_port=args.falkordb_port,
+        falkordb_password=args.falkordb_password,
         graph_name=args.graph_name,
         additive=args.additive
     )

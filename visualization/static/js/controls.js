@@ -3,6 +3,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const distanceSlider = document.getElementById('distance-slider');
     const resetButton = document.getElementById('reset-view');
     const searchBox = document.getElementById('search-box');
+    const layoutSelector = document.getElementById('layout-selector');
+
+    // Layout switching
+    if (layoutSelector) {
+        layoutSelector.addEventListener('change', (e) => {
+            const layout = e.target.value;
+            if (window.networkGraph) {
+                window.networkGraph.setLayout(layout);
+            }
+        });
+    }
 
     if (chargeSlider) {
         chargeSlider.addEventListener('input', (e) => {

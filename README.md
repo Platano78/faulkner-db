@@ -77,7 +77,8 @@ Add to `~/.config/Claude/claude_desktop_config.json` (Linux) or equivalent:
       "env": {
         "PYTHONPATH": "/path/to/faulkner-db",
         "FALKORDB_HOST": "localhost",
-        "FALKORDB_PORT": "6379"
+        "FALKORDB_PORT": "6380",
+        "FALKORDB_PASSWORD": "faulkner_kg_2026_secure"
       }
     }
   }
@@ -91,6 +92,59 @@ Add to `~/.config/Claude/claude_desktop_config.json` (Linux) or equivalent:
 - **Dashboard**: http://localhost:8082/static/dashboard.html
 - **API Health**: http://localhost:8082/health
 - **FalkorDB UI**: http://localhost:8081
+
+## Security Configuration
+
+### Authentication
+
+FalkorDB now requires password authentication for all connections.
+
+| Setting | Value |
+|---------|-------|
+| **Environment Variable** | `FALKORDB_PASSWORD` |
+| **Default (local dev)** | `faulkner_kg_2026_secure` |
+
+### Port Configuration
+
+The default port has been changed from 6379 to 6380 to avoid conflicts with standard Redis installations.
+
+| Setting | Value |
+|---------|-------|
+| **Environment Variable** | `FALKORDB_PORT` |
+| **Default Port** | `6380` |
+
+### Connection Examples
+
+**Python**
+```python
+import os
+from core.falkor_adapter import FalkorDBAdapter
+
+password = os.environ.get('FALKORDB_PASSWORD')
+adapter = FalkorDBAdapter(host='localhost', port=6380, password=password)
+```
+
+**redis-cli**
+```bash
+redis-cli -p 6380 -a $FALKORDB_PASSWORD
+```
+
+**Docker Compose Environment**
+```yaml
+environment:
+  FALKORDB_HOST: falkordb
+  FALKORDB_PORT: 6380
+  FALKORDB_PASSWORD: ${FALKORDB_PASSWORD}
+```
+
+### Destructive Commands Disabled
+
+To prevent accidental data loss, the following commands are disabled in the FalkorDB configuration:
+
+- `FLUSHALL` - Disabled
+- `FLUSHDB` - Disabled
+
+If you need to clear data during development, use the provided backup/restore scripts or recreate the container with a fresh volume.
 
 ## 🏗️ Architecture
 
@@ -220,7 +274,8 @@ Create `docker/.env` from `.env.example`:
 ```bash
 # FalkorDB Configuration
 FALKORDB_HOST=falkordb
-FALKORDB_PORT=6379
+FALKORDB_PORT=6380
+FALKORDB_PASSWORD=faulkner_kg_2026_secure
 FALKORDB_MEMORY_LIMIT=2gb
 
 # PostgreSQL Configuration
@@ -230,6 +285,8 @@ POSTGRES_USER=graphiti
 POSTGRES_PASSWORD=YOUR_SECURE_PASSWORD
 POSTGRES_DB=graphiti
 ```
+
+**Note**: The `FALKORDB_PASSWORD` is required for authentication. Change the default password in production environments.
 
 ### MCP Server Configuration
 
@@ -251,7 +308,8 @@ docker-compose restart
 
 ### FalkorDB connection errors
 - Verify FalkorDB is running: `docker-compose ps`
-- Check port 6379 is not in use: `lsof -i :6379`
+- Check port 6380 is not in use: `lsof -i :6380`
+- Verify password is set: `echo $FALKORDB_PASSWORD`
 - Review FalkorDB logs: `docker-compose logs falkordb`
 
 ### MCP server not detected in Claude

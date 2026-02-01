@@ -49,8 +49,8 @@ check_container() {
 # Check PostgreSQL
 check_container "$POSTGRES_CONTAINER" "pg_isready -U faulkner"
 
-# Check FalkorDB (Redis-based)
-check_container "$FALKORDB_CONTAINER" "redis-cli ping"
+# Check FalkorDB (Redis-based) - with password auth
+check_container "$FALKORDB_CONTAINER" "redis-cli -a faulkner_kg_2026_secure ping"
 
 # Check if today's backup exists - if not, create one
 TODAY=$(date +%Y%m%d)

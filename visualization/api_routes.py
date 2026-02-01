@@ -100,15 +100,40 @@ async def get_full_graph():
 async def get_subgraph(node_id: str, depth: int = 2):
     try:
         graph = get_db_connection()
-        query = f"""MATCH (start) WHERE id(start) = {node_id}
-                    MATCH path = (start)-[*1..{depth}]-(neighbor)
-                    UNWIND nodes(path) as n
-                    UNWIND relationships(path) as r
+        # Use property id instead of internal id
+        query = f"""MATCH (start {{id: "{node_id}"}})
+                    OPTIONAL MATCH path = (start)-[*1..{depth}]-(neighbor)
+                    WITH start, path
+                    UNWIND CASE WHEN path IS NULL THEN [start] ELSE nodes(path) END as n
+                    OPTIONAL MATCH (n)-[r]-()
                     RETURN DISTINCT n, r, null"""
         result = graph.query(query)
         return format_graph_result(result)
     except Exception as e:
         return {"nodes": [], "edges": [], "stats": {"node_count": 0, "edge_count": 0}, "error": str(e)}
+
+
+@router.get("/node/{node_id}")
+async def get_node(node_id: str):
+    """Get a single node by ID with all its properties."""
+    try:
+        graph = get_db_connection()
+        # Simple query to get one node by its custom id property
+        query = f'MATCH (n {{id: "{node_id}"}}) RETURN n'
+        result = graph.query(query)
+        
+        if not result.result_set:
+            return {"node": None, "error": "Node not found"}
+        
+        record = result.result_set[0]
+        node = record[0]
+        
+        node_data = dict(node.properties) if hasattr(node, 'properties') else {}
+        node_data['type'] = node.labels[0] if hasattr(node, 'labels') and node.labels else 'Unknown'
+        
+        return {"node": node_data}
+    except Exception as e:
+        return {"node": None, "error": str(e)}
 
 @router.get("/timeline")
 async def get_timeline():

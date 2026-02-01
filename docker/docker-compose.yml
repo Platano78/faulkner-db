@@ -4,13 +4,13 @@ services:
     image: falkordb/falkordb:latest
     container_name: faulkner-db-falkordb
     ports:
-      - "${FALKORDB_PORT}:6379"  # Redis protocol
-      - "${FALKORDB_REST_PORT:-8082}:8080"  # REST API and health checks (default 8082, port 8081 reserved for llama.cpp)
+      - "127.0.0.1:${FALKORDB_PORT}:6379"  # Redis protocol - localhost only for security
+      - "127.0.0.1:${FALKORDB_REST_PORT:-8082}:8080"  # REST API - localhost only
     environment:
       - FALKORDB_MEMORY_LIMIT=${FALKORDB_MEMORY_LIMIT}
       - FALKORDB_PERSISTENCE=${FALKORDB_PERSISTENCE}
       - FALKORDB_LOG_LEVEL=${FALKORDB_LOG_LEVEL}
-      - REDIS_ARGS=--appendonly yes --appendfsync everysec --save 60 1 --save 30 100
+      - REDIS_ARGS=--appendonly yes --appendfsync everysec --save 60 1 --save 30 100 --requirepass faulkner_kg_2026_secure --rename-command FLUSHALL FAULKNER_ADMIN_FLUSH_7x9k2m --rename-command FLUSHDB FAULKNER_ADMIN_FLUSHDB_3p8q1n
     env_file:
       - .env
     labels:
@@ -24,7 +24,7 @@ services:
     networks:
       - faulkner-network
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-a", "faulkner_kg_2026_secure", "ping"]
       interval: 30s
       timeout: 10s
       retries: 3

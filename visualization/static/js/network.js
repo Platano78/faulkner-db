@@ -183,6 +183,100 @@ class NetworkGraph {
             .call(this.zoom.transform, transform);
     }
 
+    setLayout(layout) {
+        const width = window.innerWidth - 300;
+        const height = window.innerHeight;
+
+        // Stop current simulation
+        this.simulation.stop();
+
+        if (layout === 'force') {
+            // Reset to force-directed layout
+            this.simulation
+                .force('center', d3.forceCenter(width / 2, height / 2))
+                .force('charge', d3.forceManyBody().strength(-200))
+                .force('link', d3.forceLink(this.edges).id(d => d.id).distance(60))
+                .alpha(1)
+                .restart();
+        } else if (layout === 'hierarchical') {
+            // Hierarchical layout - arrange by type
+            const typeOrder = { 'Decision': 0, 'Pattern': 1, 'Failure': 2 };
+            const levelHeight = height / 4;
+            const nodesByType = {};
+
+            this.nodes.forEach(node => {
+                const type = node.type || 'Unknown';
+                if (!nodesByType[type]) nodesByType[type] = [];
+                nodesByType[type].push(node);
+            });
+
+            Object.entries(nodesByType).forEach(([type, nodes]) => {
+                const level = typeOrder[type] !== undefined ? typeOrder[type] : 3;
+                const y = 100 + level * levelHeight;
+                nodes.forEach((node, i) => {
+                    node.fx = 50 + (i % 20) * ((width - 100) / 20);
+                    node.fy = y + Math.floor(i / 20) * 40;
+                });
+            });
+
+            this.simulation.alpha(0.3).restart();
+
+            // Release fixed positions after layout settles
+            setTimeout(() => {
+                this.nodes.forEach(node => {
+                    node.fx = null;
+                    node.fy = null;
+                });
+            }, 2000);
+        } else if (layout === 'circular') {
+            // Circular layout - arrange in concentric circles by type
+            const typeOrder = { 'Decision': 0, 'Pattern': 1, 'Failure': 2 };
+            const centerX = width / 2;
+            const centerY = height / 2;
+            const nodesByType = {};
+
+            this.nodes.forEach(node => {
+                const type = node.type || 'Unknown';
+                if (!nodesByType[type]) nodesByType[type] = [];
+                nodesByType[type].push(node);
+            });
+
+            Object.entries(nodesByType).forEach(([type, nodes]) => {
+                const ring = typeOrder[type] !== undefined ? typeOrder[type] : 3;
+                const radius = 100 + ring * 150;
+                nodes.forEach((node, i) => {
+                    const angle = (2 * Math.PI * i) / nodes.length;
+                    node.fx = centerX + radius * Math.cos(angle);
+                    node.fy = centerY + radius * Math.sin(angle);
+                });
+            });
+
+            this.simulation.alpha(0.3).restart();
+
+            // Release fixed positions after layout settles
+            setTimeout(() => {
+                this.nodes.forEach(node => {
+                    node.fx = null;
+                    node.fy = null;
+                });
+            }, 2000);
+        }
+    }
+
+    highlightNodes(matchingNodes) {
+        const matchingIds = new Set(matchingNodes.map(n => n.id));
+
+        this.g.selectAll('.node')
+            .style('opacity', d => matchingIds.size === 0 || matchingIds.has(d.id) ? 1 : 0.2)
+            .attr('stroke-width', d => matchingIds.has(d.id) ? 3 : 1);
+
+        this.g.selectAll('.link')
+            .style('opacity', d => {
+                if (matchingIds.size === 0) return 0.6;
+                return matchingIds.has(d.source.id) || matchingIds.has(d.target.id) ? 0.6 : 0.1;
+            });
+    }
+
     startPerformanceMonitor() {
         setInterval(() => {
             const now = performance.now();
@@ -191,7 +285,7 @@ class NetworkGraph {
                 this.fps = Math.round((this.frameCount * 1000) / (now - this.lastTime));
                 this.frameCount = 0;
                 this.lastTime = now;
-                
+
                 document.getElementById('fps-counter').textContent = `FPS: ${this.fps}`;
                 document.getElementById('render-time').textContent = `Render: ${Math.round(this.lastRenderTime)}ms`;
             }
@@ -211,7 +305,8 @@ class WebSocketClient {
 
     connect() {
         try {
-            this.ws = new WebSocket('ws://localhost:8082/ws');
+            const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            this.ws = new WebSocket(`${wsProtocol}//${window.location.host}/ws`);
             
             this.ws.onopen = () => {
                 console.log('WebSocket connected');
