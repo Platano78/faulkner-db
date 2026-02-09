@@ -2,11 +2,12 @@
 # NOTE: Sensitive values should be set via environment variables
 
 # FalkorDB Connection
+# Password can also be set via FALKORDB_PASSWORD env var (takes priority)
 falkordb:
   host: localhost
-  port: 6379
+  port: 6380
   database: 0
-  password: null
+  password: faulkner_kg_2026_secure
   max_connections: 50
   timeout: 30
 

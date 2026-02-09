@@ -191,23 +191,24 @@ Provide a summary of findings and recommendations."""
 
 # =============================================================================
 # Graph Algorithm Tools (Phase 4)
+# All tools use shared _get_graph() to ensure authenticated connection
 # =============================================================================
+
+def _get_graph():
+    """Get authenticated FalkorDB graph via shared client singleton."""
+    from mcp_server.mcp_tools import _get_client
+    return _get_client().db.graph
+
 
 @mcp.tool()
 async def find_influential_patterns(limit: int = 10) -> dict:
     """Find most connected/influential patterns using PageRank algorithm.
-    
+
     Returns patterns ranked by their influence in the knowledge graph,
     based on how many other nodes reference them.
     """
-    from core.graphiti_client import FalkorDBAdapter
-    
-    host = os.environ.get('FALKORDB_HOST', 'localhost')
-    port = int(os.environ.get('FALKORDB_PORT', 6380))
-    password = os.environ.get('FALKORDB_PASSWORD')
-    adapter = FalkorDBAdapter(host=host, port=port, password=password)
-    
-    # Use degree centrality as PageRank proxy (count incoming + outgoing edges)
+    graph = _get_graph()
+
     query = f"""
     MATCH (p:Pattern)
     OPTIONAL MATCH (p)-[r]-()
@@ -216,8 +217,8 @@ async def find_influential_patterns(limit: int = 10) -> dict:
     ORDER BY connections DESC
     LIMIT {limit}
     """
-    
-    result = adapter.graph.query(query)
+
+    result = graph.query(query)
     patterns = []
     for record in result.result_set:
         patterns.append({
@@ -226,7 +227,7 @@ async def find_influential_patterns(limit: int = 10) -> dict:
             'context': record[2][:200] + '...' if record[2] and len(record[2]) > 200 else record[2],
             'influence_score': record[3]
         })
-    
+
     return {
         'influential_patterns': patterns,
         'algorithm': 'degree_centrality',
@@ -237,63 +238,55 @@ async def find_influential_patterns(limit: int = 10) -> dict:
 @mcp.tool()
 async def find_knowledge_communities(min_community_size: int = 3) -> dict:
     """Detect communities of related knowledge using connected components.
-    
+
     Groups patterns that are strongly connected to each other,
     revealing clusters of related knowledge.
     """
-    from core.graphiti_client import FalkorDBAdapter
     from collections import defaultdict
-    
-    host = os.environ.get('FALKORDB_HOST', 'localhost')
-    port = int(os.environ.get('FALKORDB_PORT', 6380))
-    password = os.environ.get('FALKORDB_PASSWORD')
-    adapter = FalkorDBAdapter(host=host, port=port, password=password)
-    
-    # Find connected components via RELATES_TO relationships
+
+    graph = _get_graph()
+
     query = """
     MATCH (p1:Pattern)-[:RELATES_TO]-(p2:Pattern)
     RETURN p1.id as id1, p1.name as name1, p2.id as id2, p2.name as name2
     """
-    
-    result = adapter.graph.query(query)
-    
-    # Build adjacency and use union-find to detect communities
+
+    result = graph.query(query)
+
     parent = {}
-    
+
     def find(x):
         if x not in parent:
             parent[x] = x
         if parent[x] != x:
             parent[x] = find(parent[x])
         return parent[x]
-    
+
     def union(x, y):
         px, py = find(x), find(y)
         if px != py:
             parent[px] = py
-    
+
     node_names = {}
     for record in result.result_set:
         id1, name1, id2, name2 = record
         node_names[id1] = name1
         node_names[id2] = name2
         union(id1, id2)
-    
-    # Group by community
+
     communities = defaultdict(list)
     for node_id in node_names:
         root = find(node_id)
         communities[root].append({'id': node_id, 'name': node_names[node_id]})
-    
-    # Filter by minimum size and sort by size
+
     filtered = [
-        {'community_id': i+1, 'size': len(members), 'members': members[:10]}  # Limit members shown
+        {'community_id': i+1, 'size': len(members), 'members': members[:10]}
         for i, (root, members) in enumerate(sorted(communities.items(), key=lambda x: -len(x[1])))
         if len(members) >= min_community_size
     ]
-    
+
     return {
-        'communities': filtered[:20],  # Top 20 communities
+        'communities': filtered[:20],
         'total_communities': len(filtered),
         'algorithm': 'connected_components',
         'description': 'Clusters of patterns connected via RELATES_TO relationships'
@@ -303,19 +296,12 @@ async def find_knowledge_communities(min_community_size: int = 3) -> dict:
 @mcp.tool()
 async def find_bridge_patterns(limit: int = 10) -> dict:
     """Find bridge patterns that connect different knowledge domains.
-    
+
     These patterns have high betweenness - they connect otherwise
     separate clusters of knowledge.
     """
-    from core.graphiti_client import FalkorDBAdapter
-    
-    host = os.environ.get('FALKORDB_HOST', 'localhost')
-    port = int(os.environ.get('FALKORDB_PORT', 6380))
-    password = os.environ.get('FALKORDB_PASSWORD')
-    adapter = FalkorDBAdapter(host=host, port=port, password=password)
-    
-    # Find patterns with diverse connections (proxy for betweenness)
-    # Patterns that connect to many different other patterns
+    graph = _get_graph()
+
     query = f"""
     MATCH (p:Pattern)-[:RELATES_TO]-(other:Pattern)
     WITH p, count(DISTINCT other) as unique_connections
@@ -324,8 +310,8 @@ async def find_bridge_patterns(limit: int = 10) -> dict:
     ORDER BY unique_connections DESC
     LIMIT {limit}
     """
-    
-    result = adapter.graph.query(query)
+
+    result = graph.query(query)
     bridges = []
     for record in result.result_set:
         bridges.append({
@@ -334,7 +320,7 @@ async def find_bridge_patterns(limit: int = 10) -> dict:
             'context': record[2][:200] + '...' if record[2] and len(record[2]) > 200 else record[2],
             'bridge_score': record[3]
         })
-    
+
     return {
         'bridge_patterns': bridges,
         'algorithm': 'unique_neighbor_count',
@@ -345,40 +331,32 @@ async def find_bridge_patterns(limit: int = 10) -> dict:
 @mcp.tool()
 async def get_graph_summary() -> dict:
     """Get comprehensive summary of the knowledge graph structure.
-    
+
     Returns node counts, edge counts, relationship types, and connectivity metrics.
     """
-    from core.graphiti_client import FalkorDBAdapter
-    
-    host = os.environ.get('FALKORDB_HOST', 'localhost')
-    port = int(os.environ.get('FALKORDB_PORT', 6380))
-    password = os.environ.get('FALKORDB_PASSWORD')
-    adapter = FalkorDBAdapter(host=host, port=port, password=password)
-    
-    # Node counts by type
+    graph = _get_graph()
+
     node_query = "MATCH (n) RETURN labels(n)[0] as type, count(n) as count"
-    node_result = adapter.graph.query(node_query)
+    node_result = graph.query(node_query)
     node_counts = {record[0]: record[1] for record in node_result.result_set}
-    
-    # Edge counts by type
+
     edge_query = "MATCH ()-[r]->() RETURN type(r) as type, count(r) as count"
-    edge_result = adapter.graph.query(edge_query)
+    edge_result = graph.query(edge_query)
     edge_counts = {record[0]: record[1] for record in edge_result.result_set}
-    
-    # Connectivity metrics
+
     connected_query = """
     MATCH (p:Pattern)
     OPTIONAL MATCH (p)-[r]-()
     WITH p, count(r) as degree
-    RETURN 
+    RETURN
         count(p) as total,
         sum(CASE WHEN degree > 0 THEN 1 ELSE 0 END) as connected,
         avg(degree) as avg_degree,
         max(degree) as max_degree
     """
-    conn_result = adapter.graph.query(connected_query)
+    conn_result = graph.query(connected_query)
     conn_data = conn_result.result_set[0] if conn_result.result_set else [0, 0, 0, 0]
-    
+
     return {
         'nodes': node_counts,
         'edges': edge_counts,
@@ -460,36 +438,38 @@ async def query_patterns_semantic(query: str, limit: int = 10) -> dict:
 # ============================================================
 
 def startup_health_check():
-    """Validate FalkorDB has data on startup. Warn if database appears empty."""
+    """Validate FalkorDB connection on startup. Fail fast if auth is wrong."""
     import redis
 
     try:
-        host = os.environ.get('FALKORDB_HOST', 'localhost')
-        port = int(os.environ.get('FALKORDB_PORT', 6380))
-        password = os.environ.get('FALKORDB_PASSWORD')
+        from core.config_loader import load_config, validate_connection
+    except ImportError:
+        from config_loader import load_config, validate_connection
 
-        client = redis.Redis(host=host, port=port, password=password, decode_responses=True)
-        client.ping()
-        
+    try:
+        config = load_config()
+        logging.info(f"Config loaded: host={config.host}, port={config.port}, password={'***' if config.password else 'NONE'}")
+        validate_connection(config)
+
         # Check node count
-        result = client.execute_command('GRAPH.QUERY', 'knowledge_graph', 'MATCH (n) RETURN count(n)')
-        # Parse result - format varies but count is usually in result[1][0][0]
+        client = redis.Redis(
+            host=config.host, port=config.port, password=config.password,
+            decode_responses=True
+        )
+        result = client.execute_command('GRAPH.QUERY', config.graph_name, 'MATCH (n) RETURN count(n)')
         node_count = 0
         if result and len(result) > 1 and result[1]:
             node_count = result[1][0][0] if result[1][0] else 0
-        
+        client.close()
+
         if node_count < 10:
-            logging.warning(f"⚠️  FAULKNER-DB HEALTH WARNING: Database appears empty or corrupted!")
-            logging.warning(f"   Node count: {node_count} (expected 1000+)")
-            logging.warning(f"   Consider restoring from backup: {PROJECT_ROOT}/scripts/restore_falkordb.sh")
+            logging.warning(f"⚠️  FAULKNER-DB: Database appears empty ({node_count} nodes)")
         else:
-            logging.info(f"✓ FalkorDB health check passed: {node_count} nodes")
-            
-    except redis.ConnectionError as e:
-        logging.error(f"✗ FalkorDB connection failed: {e}")
-        logging.error(f"  Ensure FalkorDB container is running: docker start faulkner-db-falkordb")
-    except Exception as e:
-        logging.warning(f"⚠️  FalkorDB health check error: {e}")
+            logging.info(f"✓ FalkorDB connection validated: {node_count} nodes, auth OK")
+
+    except (ConnectionError, RuntimeError) as e:
+        logging.error(f"\n{e}\n")
+        sys.exit(1)  # Fail fast — don't start server with bad config
 
 # Run health check on import (when server starts)
 startup_health_check()

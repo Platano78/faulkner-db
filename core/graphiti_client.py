@@ -31,15 +31,25 @@ class MetricsCollector:
 class FalkorDBAdapter:
     """Real FalkorDB adapter using official falkordb library"""
     def __init__(self, host=None, port=None, graph_name='knowledge_graph', pool_size=10, password=None):
-        import os
         from falkordb import FalkorDB
+        try:
+            from config_loader import load_config
+        except ImportError:
+            from core.config_loader import load_config
 
-        # Use environment variables as defaults (security update 2026-02-01)
-        host = host or os.environ.get('FALKORDB_HOST', 'localhost')
-        port = port or int(os.environ.get('FALKORDB_PORT', 6380))
-        password = password or os.environ.get('FALKORDB_PASSWORD')
+        # If no explicit parameters, load from config (env → yaml → defaults)
+        if host is None and port is None and password is None:
+            config = load_config()
+            host = config.host
+            port = config.port
+            password = config.password
+            graph_name = graph_name or config.graph_name
+        else:
+            import os
+            host = host or os.environ.get('FALKORDB_HOST', 'localhost')
+            port = port or int(os.environ.get('FALKORDB_PORT', 6380))
+            password = password or os.environ.get('FALKORDB_PASSWORD')
 
-        # Support password authentication
         if password:
             self.db = FalkorDB(host=host, port=port, password=password)
         else:
@@ -212,8 +222,16 @@ class FalkorDBAdapter:
 
 class GraphitiClient:
     """Graphiti client with FalkorDB backend adapter"""
-    
+
     def __init__(self):
+        try:
+            from config_loader import load_config, validate_connection
+        except ImportError:
+            from core.config_loader import load_config, validate_connection
+
+        config = load_config()
+        validate_connection(config)
+
         self.db = FalkorDBAdapter()
         self.metrics = MetricsCollector()
 
