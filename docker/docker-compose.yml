@@ -4,8 +4,8 @@ services:
     image: falkordb/falkordb:latest
     container_name: faulkner-db-falkordb
     ports:
-      - "127.0.0.1:${FALKORDB_PORT}:6379"  # Redis protocol - localhost only for security
-      - "127.0.0.1:${FALKORDB_REST_PORT:-8082}:8080"  # REST API - localhost only
+      - "${FALKORDB_PORT}:6379"  # Redis protocol - auth via requirepass
+      - "${FALKORDB_REST_PORT:-8082}:8080"  # REST API
     environment:
       - FALKORDB_MEMORY_LIMIT=${FALKORDB_MEMORY_LIMIT}
       - FALKORDB_PERSISTENCE=${FALKORDB_PERSISTENCE}

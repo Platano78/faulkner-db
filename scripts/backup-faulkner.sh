@@ -25,7 +25,7 @@ log "Starting Faulkner-DB backup..."
 # 1. PostgreSQL backup using pg_dump
 log "Backing up PostgreSQL..."
 PG_BACKUP="$BACKUP_DIR/postgres-$TIMESTAMP.sql.gz"
-if docker exec faulkner-db-postgres pg_dump -U faulkner faulkner_knowledge 2>/dev/null | gzip > "$PG_BACKUP"; then
+if docker exec faulkner-db-postgres pg_dump -U graphiti graphiti 2>/dev/null | gzip > "$PG_BACKUP"; then
     log "PostgreSQL backup created: $PG_BACKUP ($(ls -lh "$PG_BACKUP" | awk '{print $5}'))"
 else
     log "WARNING: PostgreSQL backup failed (database may be empty or not initialized)"

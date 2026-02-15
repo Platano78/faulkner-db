@@ -47,7 +47,7 @@ check_container() {
 }
 
 # Check PostgreSQL
-check_container "$POSTGRES_CONTAINER" "pg_isready -U faulkner"
+check_container "$POSTGRES_CONTAINER" "pg_isready -U graphiti"
 
 # Check FalkorDB (Redis-based) - with password auth
 check_container "$FALKORDB_CONTAINER" "redis-cli -a faulkner_kg_2026_secure ping"
