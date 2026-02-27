@@ -36,7 +36,7 @@ log "Backing up FalkorDB..."
 FALKOR_BACKUP="$BACKUP_DIR/falkordb-$TIMESTAMP.rdb"
 
 # Trigger background save (with password auth - security update 2026-02-01)
-FALKORDB_PASSWORD="${FALKORDB_PASSWORD:-faulkner_kg_2026_secure}"
+FALKORDB_PASSWORD="${FALKORDB_PASSWORD:-changeme}"
 docker exec faulkner-db-falkordb redis-cli -a "$FALKORDB_PASSWORD" BGSAVE 2>/dev/null || true
 sleep 3  # Wait for BGSAVE to complete
 

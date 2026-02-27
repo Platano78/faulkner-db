@@ -76,5 +76,5 @@ scan_mode:
 graph_database:
   enabled: true
   host: localhost
-  port: 6379
+  port: 6380
   graph_name: knowledge_graph

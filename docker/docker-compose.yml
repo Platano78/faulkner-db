@@ -10,7 +10,7 @@ services:
       - FALKORDB_MEMORY_LIMIT=${FALKORDB_MEMORY_LIMIT}
       - FALKORDB_PERSISTENCE=${FALKORDB_PERSISTENCE}
       - FALKORDB_LOG_LEVEL=${FALKORDB_LOG_LEVEL}
-      - REDIS_ARGS=--appendonly yes --appendfsync everysec --save 60 1 --save 30 100 --requirepass faulkner_kg_2026_secure --rename-command FLUSHALL FAULKNER_ADMIN_FLUSH_7x9k2m --rename-command FLUSHDB FAULKNER_ADMIN_FLUSHDB_3p8q1n
+      - REDIS_ARGS=--appendonly yes --appendfsync everysec --save 60 1 --save 30 100 --requirepass ${FALKORDB_PASSWORD:-changeme} --rename-command FLUSHALL FAULKNER_ADMIN_FLUSH_7x9k2m --rename-command FLUSHDB FAULKNER_ADMIN_FLUSHDB_3p8q1n
     env_file:
       - .env
     labels:
@@ -24,7 +24,7 @@ services:
     networks:
       - faulkner-network
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "faulkner_kg_2026_secure", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${FALKORDB_PASSWORD:-changeme}", "ping"]
       interval: 30s
       timeout: 10s
       retries: 3

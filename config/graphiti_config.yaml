@@ -7,7 +7,7 @@ falkordb:
   host: localhost
   port: 6380
   database: 0
-  password: faulkner_kg_2026_secure
+  password: null  # Set via FALKORDB_PASSWORD env var
   max_connections: 50
   timeout: 30
 

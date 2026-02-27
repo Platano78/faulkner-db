@@ -21,7 +21,7 @@ class HealthCheckHandler(http.server.BaseHTTPRequestHandler):
                     port=int(os.getenv('POSTGRES_PORT', 5432)),
                     database=os.getenv('POSTGRES_DB', 'graphiti'),
                     user=os.getenv('POSTGRES_USER', 'graphiti'),
-                    password=os.getenv('POSTGRES_PASSWORD', 'graphiti123')
+                    password=os.getenv('POSTGRES_PASSWORD')
                 )
                 conn.close()
                 

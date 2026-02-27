@@ -139,7 +139,7 @@ FALKORDB_PORT=6379
 POSTGRES_HOST=localhost
 POSTGRES_DB=graphiti
 POSTGRES_USER=graphiti
-POSTGRES_PASSWORD=graphiti123
+POSTGRES_PASSWORD=changeme
 ```
 
 ### Port Configuration
