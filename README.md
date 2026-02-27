@@ -1,7 +1,7 @@
 # Faulkner DB - Temporal Knowledge Graph System
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python Version](https://img.shields.io/badge/python-3.8%20%7C%203.9%20%7C%203.10%20%7C%203.11-blue)](https://www.python.org/downloads/)
+[![Python Version](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12-blue)](https://www.python.org/downloads/)
 [![Docker](https://img.shields.io/badge/docker-required-blue.svg)](https://docs.docker.com/get-docker/)
 [![npm version](https://img.shields.io/npm/v/faulkner-db-config.svg)](https://www.npmjs.com/package/faulkner-db-config)
 [![CI Status](https://github.com/platano78/faulkner-db/workflows/CI/badge.svg)](https://github.com/platano78/faulkner-db/actions)
@@ -22,7 +22,7 @@
 - **Temporal Knowledge Graph** - Track changes to decisions and patterns over time
 - **Hybrid Search** - Graph traversal + vector embeddings + CrossEncoder reranking (<2s queries)
 - **Gap Detection** - NetworkX-based structural analysis to identify knowledge gaps
-- **MCP Integration** - 7 tools for seamless Claude Desktop/Code integration
+- **MCP Integration** - 12 tools for seamless Claude Desktop/Code integration
 - **Docker Deployment** - One-command startup with auto-restart support
 - **CPU-Friendly** - Built on FalkorDB, no GPU required (gaming-friendly memory footprint)
 
@@ -73,12 +73,12 @@ Add to `~/.config/Claude/claude_desktop_config.json` (Linux) or equivalent:
   "mcpServers": {
     "faulkner-db": {
       "command": "python3",
-      "args": ["-m", "mcp_server.server"],
+      "args": ["-m", "mcp_server.server_fastmcp"],
       "env": {
         "PYTHONPATH": "/path/to/faulkner-db",
         "FALKORDB_HOST": "localhost",
         "FALKORDB_PORT": "6380",
-        "FALKORDB_PASSWORD": "faulkner_kg_2026_secure"
+        "FALKORDB_PASSWORD": "changeme"
       }
     }
   }
@@ -87,11 +87,12 @@ Add to `~/.config/Claude/claude_desktop_config.json` (Linux) or equivalent:
 
 **3. Access Services**
 
-- **Network Graph**: http://localhost:8082/static/index.html
-- **Timeline View**: http://localhost:8082/static/timeline.html
-- **Dashboard**: http://localhost:8082/static/dashboard.html
-- **API Health**: http://localhost:8082/health
-- **FalkorDB UI**: http://localhost:8081
+- **Network Graph**: http://localhost:VISUALIZATION_PORT/static/index.html
+- **Timeline View**: http://localhost:VISUALIZATION_PORT/static/timeline.html
+- **Dashboard**: http://localhost:VISUALIZATION_PORT/static/dashboard.html
+- **API Health**: http://localhost:VISUALIZATION_PORT/health
+
+Set `VISUALIZATION_PORT` and `FALKORDB_REST_PORT` in `docker/.env`. See `.env.example` for defaults.
 
 ## Security Configuration
 
@@ -102,7 +103,7 @@ FalkorDB now requires password authentication for all connections.
 | Setting | Value |
 |---------|-------|
 | **Environment Variable** | `FALKORDB_PASSWORD` |
-| **Default (local dev)** | `faulkner_kg_2026_secure` |
+| **Default (local dev)** | `changeme` |
 
 ### Port Configuration
 
@@ -118,10 +119,10 @@ The default port has been changed from 6379 to 6380 to avoid conflicts with stan
 **Python**
 ```python
 import os
-from core.falkor_adapter import FalkorDBAdapter
+from core.graphiti_client import GraphitiClient
 
 password = os.environ.get('FALKORDB_PASSWORD')
-adapter = FalkorDBAdapter(host='localhost', port=6380, password=password)
+client = GraphitiClient(host='localhost', port=6380, password=password)
 ```
 
 **redis-cli**
@@ -141,10 +142,10 @@ environment:
 
 To prevent accidental data loss, the following commands are disabled in the FalkorDB configuration:
 
-- `FLUSHALL` - Disabled
-- `FLUSHDB` - Disabled
+- `FLUSHALL` - Renamed to an obscure command (not directly callable)
+- `FLUSHDB` - Renamed to an obscure command (not directly callable)
 
-If you need to clear data during development, use the provided backup/restore scripts or recreate the container with a fresh volume.
+If you need to clear data during development, recreate the container with a fresh volume.
 
 ## 🏗️ Architecture
 
@@ -158,11 +159,12 @@ If you need to clear data during development, use the provided backup/restore sc
          │                          │                           │
          ▼                          ▼                           ▼
 ┌─────────────────────┐    ┌─────────────────────┐    ┌─────────────────────┐
-│   7 MCP Tools       │    │   Hybrid Search      │    │   PostgreSQL        │
+│   12 MCP Tools      │    │   Hybrid Search      │    │   PostgreSQL        │
 │   - add_decision    │    │   Graph + Vector     │    │   (Metadata Store)  │
 │   - query_decisions │    │   + Reranking        │    │                     │
 │   - detect_gaps     │    │                      │    │                     │
 │   - get_timeline    │    │                      │    │                     │
+│   - graph_summary   │    │                      │    │                     │
 └─────────────────────┘    └─────────────────────┘    └─────────────────────┘
 ```
 
@@ -245,6 +247,50 @@ Temporal view showing how understanding evolved over time.
 }
 ```
 
+### 8. find_influential_patterns
+Find the most connected/influential patterns using degree centrality.
+
+```json
+{
+  "limit": 10
+}
+```
+
+### 9. find_knowledge_communities
+Detect communities of related knowledge using connected components analysis.
+
+```json
+{
+  "min_community_size": 3
+}
+```
+
+### 10. find_bridge_patterns
+Find bridge patterns that connect different knowledge domains.
+
+```json
+{
+  "limit": 10
+}
+```
+
+### 11. get_graph_summary
+Get comprehensive summary of the knowledge graph structure, including node counts, edge counts, and connectivity metrics.
+
+```json
+{}
+```
+
+### 12. query_patterns_semantic
+Semantic search for patterns using sentence-transformers embeddings. More intelligent than keyword matching.
+
+```json
+{
+  "query": "authentication middleware",
+  "limit": 10
+}
+```
+
 ## 🛠️ Technical Stack
 
 | Component | Technology |
@@ -254,7 +300,7 @@ Temporal view showing how understanding evolved over time.
 | **Embeddings** | sentence-transformers (all-MiniLM-L6-v2) |
 | **Reranking** | cross-encoder/ms-marco-MiniLM-L-6-v2 |
 | **Graph Analysis** | NetworkX |
-| **MCP Server** | Python 3.8+ |
+| **MCP Server** | Python 3.9+ (FastMCP) |
 | **Deployment** | Docker Compose |
 
 ## ⚡ Performance
@@ -275,8 +321,9 @@ Create `docker/.env` from `.env.example`:
 # FalkorDB Configuration
 FALKORDB_HOST=falkordb
 FALKORDB_PORT=6380
-FALKORDB_PASSWORD=faulkner_kg_2026_secure
+FALKORDB_PASSWORD=changeme
 FALKORDB_MEMORY_LIMIT=2gb
+FALKORDB_REST_PORT=8082
 
 # PostgreSQL Configuration
 POSTGRES_HOST=postgres
@@ -284,6 +331,9 @@ POSTGRES_PORT=5432
 POSTGRES_USER=graphiti
 POSTGRES_PASSWORD=YOUR_SECURE_PASSWORD
 POSTGRES_DB=graphiti
+
+# Visualization
+VISUALIZATION_PORT=8086
 ```
 
 **Note**: The `FALKORDB_PASSWORD` is required for authentication. Change the default password in production environments.
@@ -321,7 +371,7 @@ docker-compose restart
 ### Data persistence issues
 - Verify `docker/data/` directory has correct permissions
 - Check `FALKORDB_PERSISTENCE=true` in `.env`
-- Backup data: `docker-compose exec falkordb redis-cli BGSAVE`
+- Backup data: `docker-compose exec falkordb redis-cli -a $FALKORDB_PASSWORD BGSAVE`
 
 ## 🤝 Contributing
 
