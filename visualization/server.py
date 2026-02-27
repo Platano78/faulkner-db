@@ -4,9 +4,19 @@ from fastapi.staticfiles import StaticFiles
 import uvicorn
 import time
 import json
-from api_routes import router
+from api_routes import router, ensure_indexes, configure_server_limits
 
 app = FastAPI(title="Faulkner DB Visualization API")
+
+
+@app.on_event("startup")
+async def startup_init():
+    """Initialize FalkorDB indexes and server limits on first startup."""
+    try:
+        ensure_indexes()
+        configure_server_limits()
+    except Exception:
+        pass
 
 # Add CORS middleware
 app.add_middleware(
