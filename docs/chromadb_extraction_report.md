@@ -75,18 +75,8 @@ if len(context) < 10:
 ✅ Pattern filtering by keywords - Working
 
 ### Sample Data
-**Decision Sample:**
-- ID: D-5c12a3ae
-- Description: "for what tasks..."
-
-**Pattern Sample:**
-- ID: P-3efb3870
-- Name: "wins\" statement"
-- Context: "ow: sports → music/dance → animals/career..."
-
-**Failure Sample:**
-- ID: F-14fd6430
-- Attempt: "release as \"orchestration platform\"**..."
+Sample IDs and snippets redacted to avoid exposing private knowledge-graph
+content. Node IDs follow the schema `D-<hex8>` / `P-<hex8>` / `F-<hex8>`.
 
 ---
 
