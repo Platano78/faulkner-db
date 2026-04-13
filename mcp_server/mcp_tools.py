@@ -183,20 +183,37 @@ async def add_failure(
 @track_tool
 async def find_related(
     node_id: str,
-    depth: int = 1
+    depth: int = 1,
+    include_similar: bool = False,
 ) -> List[Dict[str, Any]]:
-    """Find related knowledge nodes via graph traversal up to specified depth."""
+    """Find related knowledge nodes via graph traversal.
+
+    By default, traverses only STRUCTURAL relationships (RELATES_TO, SOLVES,
+    IMPLEMENTS, DEPENDS_ON, REFERENCES, ADDRESSES, SIMILAR_TO, CONTRADICTS),
+    excluding the noisy SEMANTICALLY_SIMILAR edges auto-generated from embeddings.
+
+    Args:
+        node_id: The node id to traverse from.
+        depth: Hop count (1..N).
+        include_similar: If True, also traverse SEMANTICALLY_SIMILAR edges.
+    """
     if depth < 1:
         return []
-    
+
     try:
         # Use Cypher to get related nodes with full content in one query
         client = _get_client()
-        
+
+        # Type filter — structural by default
+        if include_similar:
+            type_filter = ""  # allow all edge types
+        else:
+            type_filter = ":RELATES_TO|SOLVES|IMPLEMENTS|DEPENDS_ON|REFERENCES|ADDRESSES|SIMILAR_TO|CONTRADICTS"
+
         # Query for nodes within specified depth, returning full node properties
         cypher_query = f'''
-        MATCH path = (start {{id:"{node_id}"}})-[r*1..{depth}]-(related)
-        RETURN DISTINCT 
+        MATCH path = (start {{id:"{node_id}"}})-[r{type_filter}*1..{depth}]-(related)
+        RETURN DISTINCT
             related.id AS id,
             related.description AS description,
             related.rationale AS rationale,
@@ -252,16 +269,23 @@ async def find_related(
 
 
 @track_tool
-async def detect_gaps() -> Dict[str, Any]:
+async def detect_gaps(include_similar: bool = False) -> Dict[str, Any]:
     """Run NetworkX structural gap analysis on knowledge graph.
-    
+
+    By default runs on the STRUCTURAL subgraph (excluding SEMANTICALLY_SIMILAR
+    edges from embeddings) so isolated-node / bridge detection reflects real
+    knowledge gaps, not embedding noise.
+
     Returns comprehensive analysis including:
-    - Isolated nodes (no connections)
+    - Isolated nodes (no structural connections)
     - Disconnected clusters
     - Bridge nodes (critical connectors)
     - Connectivity metrics
     """
-    return await _get_networkx_analyzer().detect_gaps()
+    # Reset cached graph so the include_similar flag takes effect each call
+    analyzer = _get_networkx_analyzer()
+    analyzer.graph = None
+    return await analyzer.detect_gaps(include_similar=include_similar)
 
 
 @track_tool

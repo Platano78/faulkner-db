@@ -34,7 +34,7 @@ from mcp_server.mcp_tools import (
 # Initialize FastMCP server with MCP 2025-11-25 compliance
 mcp = FastMCP(
     name="faulkner-db",
-    version="1.1.1",
+    version="1.5.0",
 )
 
 # Tool 1: Add Decision
@@ -86,16 +86,26 @@ async def add_failure(
 @mcp.tool()
 async def find_related(
     node_id: str,
-    depth: int = 1
+    depth: int = 1,
+    include_similar: bool = False,
 ) -> list[dict]:
-    """Find related knowledge nodes via graph traversal."""
-    return await impl_find_related(node_id, depth)
+    """Find related knowledge nodes via graph traversal.
+
+    By default, only structural edges (RELATES_TO, SOLVES, IMPLEMENTS, etc.)
+    are traversed. The noisy SEMANTICALLY_SIMILAR edges from embeddings are
+    excluded unless include_similar=True.
+    """
+    return await impl_find_related(node_id, depth, include_similar=include_similar)
 
 # Tool 6: Detect Gaps
 @mcp.tool()
-async def detect_gaps() -> dict:
-    """Run NetworkX structural analysis to detect knowledge gaps."""
-    return await impl_detect_gaps()
+async def detect_gaps(include_similar: bool = False) -> dict:
+    """Run NetworkX structural gap analysis.
+
+    By default excludes SEMANTICALLY_SIMILAR edges so bridges and isolated
+    nodes reflect real structural gaps rather than embedding noise.
+    """
+    return await impl_detect_gaps(include_similar=include_similar)
 
 # Tool 7: Get Timeline
 @mcp.tool()

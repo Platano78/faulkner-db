@@ -12,51 +12,47 @@ class NetworkXAnalyzer:
         self.client = graphiti_client
         self.graph = None
         
-    async def export_to_networkx(self) -> nx.DiGraph:
+    async def export_to_networkx(self, include_similar: bool = False) -> nx.DiGraph:
         """Export FalkorDB graph to NetworkX DiGraph.
-        
-        Returns:
-            NetworkX DiGraph with all nodes and edges from FalkorDB
+
+        By default excludes SEMANTICALLY_SIMILAR edges (embedding noise) so
+        structural analysis runs on the meaningful subgraph. Set
+        include_similar=True to include them.
         """
         G = nx.DiGraph()
-        
-        # Query all nodes
+
         try:
-            # Use FalkorDB adapter to get all nodes
+            # Only return nodes that actually participate in the (filtered) subgraph
+            # would be faster, but keeping full node set preserves isolates detection.
             node_query = "MATCH (n) RETURN n.id as id, labels(n) as labels, properties(n) as props"
             node_result = self.client.db.graph.query(node_query)
-            
+
             for record in node_result.result_set:
                 node_id = record[0]
                 labels = record[1]
                 props = dict(record[2]) if record[2] else {}
-
-                # Remove 'type' from props to avoid conflict with keyword argument
                 props_copy = props.copy()
                 props_copy.pop('type', None)
-
                 G.add_node(node_id, type=labels[0] if labels else "Unknown", **props_copy)
-            
-            # Query all edges
-            edge_query = "MATCH (n)-[r]->(m) RETURN n.id as source, type(r) as rel_type, m.id as target"
+
+            # Edge query — filter out SEMANTICALLY_SIMILAR unless explicitly requested
+            if include_similar:
+                edge_query = "MATCH (n)-[r]->(m) RETURN n.id as source, type(r) as rel_type, m.id as target"
+            else:
+                edge_query = "MATCH (n)-[r]->(m) WHERE type(r) <> 'SEMANTICALLY_SIMILAR' RETURN n.id as source, type(r) as rel_type, m.id as target"
             edge_result = self.client.db.graph.query(edge_query)
-            
+
             for record in edge_result.result_set:
-                source_id = record[0]
-                rel_type = record[1]
-                target_id = record[2]
-                
-                G.add_edge(source_id, target_id, relationship=rel_type)
-                
+                G.add_edge(record[0], record[2], relationship=record[1])
+
         except Exception as e:
-            # Fallback: build graph from client relationships
             print(f"Warning: Could not query graph directly, using fallback: {e}")
             pass
-        
+
         self.graph = G
         return G
     
-    async def detect_gaps(self) -> Dict[str, Any]:
+    async def detect_gaps(self, include_similar: bool = False) -> Dict[str, Any]:
         """Detect structural gaps in knowledge graph.
         
         Returns:
@@ -71,10 +67,10 @@ class NetworkXAnalyzer:
             - avg_degree: Average node degree
         """
         if self.graph is None:
-            await self.export_to_networkx()
-        
+            await self.export_to_networkx(include_similar=include_similar)
+
         G = self.graph
-        
+
         if G.number_of_nodes() == 0:
             return {
                 "isolated_nodes": [],
@@ -93,12 +89,13 @@ class NetworkXAnalyzer:
         # Find weakly connected components
         components = list(nx.weakly_connected_components(G))
         
-        # Find bridge nodes (critical connectors)
+        # Find bridge nodes (critical connectors) via sampled betweenness to keep this bounded
         bridges = []
         if G.number_of_edges() > 0 and G.number_of_nodes() > 1:
             try:
-                betweenness = nx.betweenness_centrality(G)
-                # Top 10 nodes by betweenness centrality
+                # Sampled betweenness: k-pivot pairs keeps runtime sub-quadratic for larger graphs
+                k = min(G.number_of_nodes(), 500)
+                betweenness = nx.betweenness_centrality(G, k=k, seed=42)
                 sorted_nodes = sorted(betweenness.items(), key=lambda x: x[1], reverse=True)
                 bridges = [node for node, score in sorted_nodes[:10] if score > 0]
             except Exception as e:
