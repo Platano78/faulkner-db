@@ -11,6 +11,7 @@ Extracts relationships between existing nodes in FalkorDB using multi-layer dete
 Does NOT re-scan markdown files - operates on existing graph nodes only.
 """
 
+import os
 import sys
 import json
 import re
@@ -55,8 +56,13 @@ class RelationshipExtractor:
             'nodes_with_edges': set(),
         }
         
-        # LLM configuration (llamacpp backend - OpenAI-compatible)
-        self.llm_base_url = 'http://localhost:8081/v1'  # llamacpp OpenAI-compatible endpoint
+        # LLM configuration (OpenAI-compatible endpoint; llama.cpp, vLLM, LM Studio, etc.)
+        # Override via FAULKNER_LLM_ENDPOINT env var. Pass the base URL (e.g. http://host:port/v1);
+        # the extractor appends /models for health detection and /chat/completions for enhancement.
+        self.llm_base_url = os.environ.get(
+            'FAULKNER_LLM_ENDPOINT',
+            'http://localhost:8081/v1'
+        )
         self.mkg_available = self.detect_mkg_availability()
         
         # Node cache for LLM processing

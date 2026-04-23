@@ -50,13 +50,13 @@ def query_graph_stats(redis_client):
     try:
         # Try to query the graph
         result = redis_client.execute_command(
-            'GRAPH.QUERY', 'faulkner',
+            'GRAPH.QUERY', 'knowledge_graph',
             "MATCH (n) RETURN count(n) as node_count"
         )
         node_count = result[1][0][0] if result and len(result) > 1 else 0
         
         result = redis_client.execute_command(
-            'GRAPH.QUERY', 'faulkner',
+            'GRAPH.QUERY', 'knowledge_graph',
             "MATCH ()-[r]->() RETURN count(r) as edge_count"
         )
         edge_count = result[1][0][0] if result and len(result) > 1 else 0

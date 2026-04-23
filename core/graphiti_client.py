@@ -1,4 +1,5 @@
 # ~/project/faulkner-db/core/graphiti_client.py
+import hashlib
 import time
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -142,21 +143,33 @@ class FalkorDBAdapter:
         return nodes
         
     def create_relationship(self, from_id: str, to_id: str, rel_type: str, properties: Dict = None):
-        """Create a relationship between two nodes"""
-        # Build property string for relationship
-        prop_string = ''
-        if properties:
-            prop_strings = []
-            for key, value in properties.items():
-                if isinstance(value, str):
-                    escaped_value = value.replace('"', '\\\\"')
-                    prop_strings.append(f'{key}:"{escaped_value}"')
-                else:
-                    prop_strings.append(f'{key}:{value}')
-            prop_string = ' {' + ', '.join(prop_strings) + '}'
-            
-        # Create relationship between nodes
-        query = f'MATCH (a {{id:"{from_id}"}}), (b {{id:"{to_id}"}}) CREATE (a)-[:{rel_type}{prop_string}]->(b)'
+        """Idempotent: re-running with same inputs does not duplicate the edge.
+
+        Fingerprint = sha256(from|to|type|evidence)[:16]. MERGE on fingerprint
+        collapses exact duplicates across extractor re-runs while preserving
+        legitimately distinct same-type edges (different evidence).
+        """
+        props = dict(properties) if properties else {}
+        evidence = str(props.get('evidence') or props.get('description') or '')
+        fp = hashlib.sha256(f"{from_id}|{to_id}|{rel_type}|{evidence}".encode()).hexdigest()[:16]
+        props['fingerprint'] = fp
+
+        on_create_parts = []
+        for key, value in props.items():
+            if key == 'fingerprint':
+                continue
+            if isinstance(value, str):
+                escaped_value = value.replace('"', '\\\\"')
+                on_create_parts.append(f'r.{key} = "{escaped_value}"')
+            else:
+                on_create_parts.append(f'r.{key} = {value}')
+        on_create_clause = f' ON CREATE SET {", ".join(on_create_parts)}' if on_create_parts else ''
+
+        query = (
+            f'MATCH (a {{id:"{from_id}"}}), (b {{id:"{to_id}"}}) '
+            f'MERGE (a)-[r:{rel_type} {{fingerprint:"{fp}"}}]->(b)'
+            f'{on_create_clause}'
+        )
         self.graph.query(query)
     
     def query_relationships(self, node_id: str) -> List[Dict]:

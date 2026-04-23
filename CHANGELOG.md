@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2026-04-23
+
+### Fixed
+
+- **Extractor was creating duplicate edges on every re-run.** `FalkorDBAdapter.create_relationship` used `CREATE` unconditionally, so re-running the relationship extractor (manually or via nightly cron) inflated edge counts. Changed to `MERGE` keyed on a content fingerprint = `sha256(src|tgt|type|evidence)[:16]`. Reruns with identical inputs are now idempotent; legitimately distinct same-type edges (different evidence) are preserved.
+- **Extractor LLM endpoint was hard-coded.** `RelationshipExtractor.__init__` hard-coded `http://localhost:8081/v1` as the OpenAI-compatible base URL for relationship classification. Now read from the `FAULKNER_LLM_ENDPOINT` env var (same localhost default). Override to any OpenAI-compatible endpoint — llama.cpp, vLLM, LM Studio, NVIDIA NIM, etc. **Pass the base URL only** (e.g. `http://host:port/v1`); the extractor appends `/models` for health detection and `/chat/completions` for enhancement.
+- **Graph name was inconsistent across codebase.** `default_graph_name` in `config/graphiti_config.yaml` said `faulkner_knowledge_graph` (doesn't exist on any running instance); `scripts/generate_report.py` hard-coded `faulkner` (empty leftover from earlier testing); actual data lived in `knowledge_graph`. All three now aligned on `knowledge_graph`.
+
+### Notes
+
+- The MERGE-on-fingerprint change is a behavioural fix, not a schema migration — existing graphs continue to work. New duplicates simply won't be created on subsequent extractor runs.
+- If you were relying on the hard-coded `localhost:8081` endpoint, no change is needed; the default is unchanged. If you want to point the extractor elsewhere, export `FAULKNER_LLM_ENDPOINT=http://your-host:port/v1` before running.
+
 ## [1.5.0] - 2026-04-13
 
 ### Fixed

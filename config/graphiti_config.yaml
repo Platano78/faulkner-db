@@ -26,7 +26,7 @@ postgres:
 
 # Graph Configuration
 graph:
-  default_graph_name: faulkner_knowledge_graph
+  default_graph_name: knowledge_graph
   enable_temporal_queries: true
   enable_relationship_traversal: true
   max_traversal_depth: 5
