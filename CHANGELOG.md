@@ -5,6 +5,70 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.0] - 2026-05-06
+
+### Removed (mass cleanup)
+
+- **10,781 polluted nodes purged.** Graph went from 11,018 → 237 nodes
+  (-97.8%) and 113,868 → 5,241 edges (-95.4%). Two pollution sources
+  identified by audit:
+  - 586 MKG playbook Patterns named `playbook-${category}-${unix_ms}` —
+    migrated to MKG's own SQLite store before deletion (manifest in
+    `logs/migrate_manifest_*.json`).
+  - 10,195 nodes (906 Patterns + 9,139 Failures + 150 Decisions) with
+    `source_files` containing `agent-genesis` — auto-extracted
+    conversation fragments, deleted (raw conversations remain in Agent
+    Genesis itself).
+- Both purges took a server-side Redis BGSAVE plus a paginated local
+  JSON dump before any mutation; reports in `logs/purge_report_*.json`.
+
+### Added
+
+- **Ingestion guards** (`mcp_server/ingestion_guards.py`) reject writes
+  that match the playbook regex, contain `agent-genesis` in
+  `source_files`, or omit the new required `source` parameter.
+  Rejections logged to `logs/rejected_writes.jsonl`. 10/10 unit tests.
+- **Required `source` parameter** on `add_decision` / `add_pattern` /
+  `add_failure` — must be `"manual"` or `"reviewed_automated"`. Bypass
+  via `FAULKNER_ALLOW_AUTOMATED=true` when running an authorized
+  automated reviewer.
+- **Configurable blocklist** via `FAULKNER_INGESTION_BLOCKLIST_FILE`
+  (JSON `{"patterns": [...]}` or plain text, one regex per line).
+- **`SEMANTIC_SIMILARITY_THRESHOLD` env var** in
+  `ingestion/relationship_extractor.py` (default `0.85`, was hardcoded
+  `0.7`). Tighter threshold by default; existing callers can still pass
+  an explicit `threshold=` to override.
+- **`scripts/regenerate_semantic_edges.py`** — re-runs the embedding
+  step on the cleaned corpus at the new threshold. SEMANTICALLY_SIMILAR
+  edges went 4,658 → 1,398 (-70%).
+- **`scripts/health_check.py`** — read-only graph diagnostic with
+  `--json` and `--strict` modes. Reports totals, ratios, Pattern degree
+  stats, top-10 most-connected patterns flagged HUMAN-CURATED vs
+  TELEMETRY.
+- **systemd user timer** (`scripts/faulkner-health-graph.{service,timer}`)
+  runs the health check every 6 hours. Credentials live in
+  `~/.config/faulkner-health/env` (mode 600); the wrapper
+  `scripts/run-health-check.sh` enforces presence and exits clean if
+  missing.
+- **Maintenance scripts** in `scripts/` for the cleanup itself:
+  `audit_mkg_pollution.py`, `migrate_mkg_to_sqlite.py`,
+  `purge_migrated_nodes.py`, `purge_auto_ingest.py`. All default to
+  `--dry-run`; all emit JSON manifests under `logs/`.
+
+### Migration notes
+
+- **Existing callers of `add_*` will break** unless they (a) add
+  `source: "manual"` to every payload, or (b) export
+  `FAULKNER_ALLOW_AUTOMATED=true`. The default is the secure-by-default
+  reject-without-source behavior. This is a breaking API contract
+  change but is gated behind a documented env var escape hatch.
+- The MKG playbook persistence has moved out of Faulkner-DB entirely.
+  Consumers of Faulkner-DB no longer see playbook-* Patterns. MKG's new
+  store lives in the `deepseek-mcp-bridge` repo at
+  `mkg/playbook/store.py` (Python) and
+  `src/intelligence/playbook-store.js` (Node). Both bind to the same
+  SQLite file.
+
 ## [1.6.0] - 2026-04-23
 
 ### Fixed

@@ -178,9 +178,14 @@ Record architectural decision with full context and rationale.
   "description": "Use FalkorDB for temporal graphs",
   "rationale": "CPU-friendly, Redis-compatible, excellent temporal support",
   "alternatives": ["Neo4j", "ArangoDB"],
-  "related_to": []
+  "related_to": [],
+  "source": "manual"
 }
 ```
+
+> **`source` is required as of v1.7.0** unless `FAULKNER_ALLOW_AUTOMATED=true`.
+> Allowed values: `"manual"` (human-curated) or `"reviewed_automated"`
+> (LLM-drafted, human-reviewed). See [Ingestion Guards](#-ingestion-guards-v170).
 
 ### 2. query_decisions
 Hybrid search for decisions by topic/timeframe.
@@ -203,7 +208,8 @@ Store successful implementation pattern.
   "name": "CQRS Pattern",
   "implementation": "Separate read/write models with event sourcing",
   "use_cases": ["High-scale systems", "Event-driven architecture"],
-  "context": "Microservices with async communication"
+  "context": "Microservices with async communication",
+  "source": "manual"
 }
 ```
 
@@ -215,7 +221,8 @@ Document what didn't work and lessons learned.
   "attempt": "Used RabbitMQ with 50+ queues",
   "reason_failed": "Performance degradation under load",
   "lesson_learned": "Use Kafka for high-throughput streaming",
-  "alternative_solution": "Migrated to Kafka with topic partitioning"
+  "alternative_solution": "Migrated to Kafka with topic partitioning",
+  "source": "manual"
 }
 ```
 
@@ -290,6 +297,75 @@ Semantic search for patterns using sentence-transformers embeddings. More intell
   "limit": 10
 }
 ```
+
+## 🛡️ Ingestion Guards (v1.7.0)
+
+Every write through `add_decision` / `add_pattern` / `add_failure` is now
+gated to prevent re-introduction of two pollution patterns that historically
+ballooned the graph (10,781 nodes purged in v1.7.0):
+
+1. **Blocklist regex** on `name` / `context` / `description` / `attempt`
+   fields. Defaults block `^playbook-.*-\d{13}$` (MKG playbook signature)
+   and `.*-\d{13}$` (any unix-ms timestamp suffix, defensive). Override
+   the list via `FAULKNER_INGESTION_BLOCKLIST_FILE` (JSON
+   `{"patterns": [...]}` or one regex per line).
+2. **`source_files` containing `agent-genesis`** — historically the
+   conversation-fragment auto-ingest path. Hard-rejected.
+3. **`source` parameter required** — must be `"manual"` or
+   `"reviewed_automated"`. Set `FAULKNER_ALLOW_AUTOMATED=true` to bypass
+   when running an authorized automated reviewer.
+
+Rejections are logged as one JSON line each to `logs/rejected_writes.jsonl`
+(timestamp, label, reason, truncated sample fields, matched pattern).
+Override the path via `FAULKNER_REJECTION_LOG`.
+
+## 🩺 Graph Health Check (v1.7.0)
+
+`scripts/health_check.py` is a read-only diagnostic over the live graph:
+
+```bash
+FALKORDB_HOST=192.168.1.79 FALKORDB_PORT=6380 FALKORDB_PASSWORD=... \
+  python scripts/health_check.py            # human-readable
+  python scripts/health_check.py --json     # machine-readable
+  python scripts/health_check.py --strict   # exit 1 on any warning
+```
+
+Reports node/edge totals, `Failure:Decision` ratio (warn > 5),
+`SEMANTICALLY_SIMILAR / structural_edges` ratio (warn > 1.0), avg/max
+Pattern degree (warn > 20 / > 50), and the top-10 most-connected
+patterns flagged HUMAN-CURATED vs TELEMETRY.
+
+### Schedule via systemd user timer
+
+```bash
+mkdir -p ~/.config/faulkner-health
+cat > ~/.config/faulkner-health/env <<'EOF'
+FALKORDB_HOST=192.168.1.79
+FALKORDB_PORT=6380
+FALKORDB_PASSWORD=YOUR_PASSWORD
+EOF
+chmod 600 ~/.config/faulkner-health/env
+
+cp scripts/faulkner-health-graph.{service,timer} ~/.config/systemd/user/
+systemctl --user daemon-reload
+systemctl --user enable --now faulkner-health-graph.timer
+```
+
+Runs every 6 hours; output in `journalctl --user -u faulkner-health-graph`.
+
+## 🧪 Maintenance scripts (v1.7.0)
+
+| Script | Purpose |
+|---|---|
+| `scripts/audit_mkg_pollution.py` | Read-only audit; JSON pollution report by signature & node label. |
+| `scripts/migrate_mkg_to_sqlite.py` | One-shot migration of MKG playbook Patterns to MKG's SQLite store. Idempotent on re-run. |
+| `scripts/purge_migrated_nodes.py` | Manifest-driven delete (paired with the migration). |
+| `scripts/purge_auto_ingest.py` | Criteria-driven delete of Agent Genesis–ingested nodes. |
+| `scripts/regenerate_semantic_edges.py` | Re-run sentence-transformers + FAISS at the env-tunable threshold. |
+
+All destructive scripts default to `--dry-run`, take a server-side BGSAVE
+plus a paginated local JSON dump before any mutation, and emit a
+JSON manifest under `logs/` for traceability.
 
 ## 🛠️ Technical Stack
 
