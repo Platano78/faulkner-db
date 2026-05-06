@@ -6,8 +6,14 @@ After=network.target
 [Service]
 Type=oneshot
 WorkingDirectory=%h/project/faulkner-db
-EnvironmentFile=%h/project/faulkner-db/docker/.env
-ExecStart=%h/project/faulkner-db/venv/bin/python scripts/health_check.py --strict
+# Wrapper sources docker/.env for credentials and forces FALKORDB_HOST
+# to the actual host (the .env's 'falkordb' is docker-internal only).
+# --strict would exit 1 on any warning, marking the unit failed.
+# Leave it off for the periodic check so persistent warnings (e.g. high
+# Pattern degree on the curated corpus) don't constantly flag failure.
+# Run with --strict manually for ad-hoc gating:
+#   ~/project/faulkner-db/scripts/run-health-check.sh --strict
+ExecStart=%h/project/faulkner-db/scripts/run-health-check.sh
 StandardOutput=journal
 StandardError=journal
 
