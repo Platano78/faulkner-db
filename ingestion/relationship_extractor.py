@@ -27,6 +27,9 @@ from core.graphiti_client import GraphitiClient
 from sentence_transformers import SentenceTransformer
 import faiss
 
+# Default semantic similarity threshold: read from env, fallback to 0.85
+_DEFAULT_SEMANTIC_THRESHOLD = float(os.environ.get("SEMANTIC_SIMILARITY_THRESHOLD", "0.85"))
+
 # Try to import MKG client for LLM enhancement
 try:
     import requests
@@ -371,13 +374,14 @@ class RelationshipExtractor:
         print(f"  ✅ Found {len(relationships)} cross-references")
         return relationships
     
-    def extract_semantic_similarity(self, nodes: List[Dict], threshold: float = 0.7) -> List[Tuple[str, str, str, float]]:
+    def extract_semantic_similarity(self, nodes: List[Dict], threshold: float = _DEFAULT_SEMANTIC_THRESHOLD) -> List[Tuple[str, str, str, float]]:
         """
         Layer 3: Extract semantic similarity using FAISS and sentence embeddings.
         
         Args:
             nodes: List of nodes with text content
-            threshold: Minimum similarity score (0.7+ recommended)
+            threshold: Minimum similarity score (default: 0.85, or read from
+                       SEMANTIC_SIMILARITY_THRESHOLD env var; 0.85+ recommended)
         
         Returns:
             List of (source_id, target_id, relationship_type, weight) tuples

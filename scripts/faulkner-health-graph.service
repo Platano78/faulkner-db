@@ -1,0 +1,38 @@
+[Unit]
+Description=Faulkner-DB Graph Health Check
+Documentation=https://github.com/Platano78/faulkner-db
+After=network.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/project/faulkner-db
+EnvironmentFile=%h/project/faulkner-db/docker/.env
+ExecStart=%h/project/faulkner-db/venv/bin/python scripts/health_check.py --strict
+StandardOutput=journal
+StandardError=journal
+
+# Resource limits — health_check is read-only and small
+MemoryMax=512M
+CPUQuota=25%
+
+[Install]
+WantedBy=multi-user.target
+
+# Install (user-level systemd):
+#
+#   mkdir -p ~/.config/systemd/user
+#   cp scripts/faulkner-health-graph.service ~/.config/systemd/user/
+#   cp scripts/faulkner-health-graph.timer   ~/.config/systemd/user/
+#   systemctl --user daemon-reload
+#   systemctl --user enable --now faulkner-health-graph.timer
+#
+# Verify:
+#   systemctl --user status faulkner-health-graph.timer
+#   journalctl --user -u faulkner-health-graph.service -n 50
+#
+# Manual run:
+#   systemctl --user start faulkner-health-graph.service
+#
+# EnvironmentFile loads FALKORDB_HOST/PORT/PASSWORD from docker/.env so
+# the same credentials work for both the docker-compose stack and this
+# scheduled job.

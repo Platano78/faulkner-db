@@ -13,6 +13,7 @@ from core.graphiti_client import GraphitiClient
 from core.hybrid_search import hybrid_search
 from core.gap_detector import GapDetector
 from mcp_server.networkx_analyzer import NetworkXAnalyzer
+from mcp_server.ingestion_guards import validate_write, IngestionRejected
 
 # Lazy client initialization
 _client = None
@@ -44,9 +45,15 @@ async def add_decision(
     rationale: str,
     alternatives: List[str],
     related_to: List[str],
-    source_files: Optional[List[str]] = None
+    source_files: Optional[List[str]] = None,
+    source: Optional[str] = None
 ) -> Dict[str, str]:
     """Record an architectural decision with rationale and source tracking."""
+    try:
+        validate_write("Decision", name_fields={"description": description},
+                       source_files=source_files, source=source)
+    except IngestionRejected as e:
+        return {"status": "rejected", "reason": str(e)}
     # Validate input
     decision_input = DecisionInput(
         description=description,
@@ -116,9 +123,15 @@ async def add_pattern(
     implementation: str,
     use_cases: List[str],
     context: str,
-    source_files: Optional[List[str]] = None
+    source_files: Optional[List[str]] = None,
+    source: Optional[str] = None
 ) -> Dict[str, str]:
     """Store a successful implementation pattern with source tracking."""
+    try:
+        validate_write("Pattern", name_fields={"name": name, "context": context},
+                       source_files=source_files, source=source)
+    except IngestionRejected as e:
+        return {"status": "rejected", "reason": str(e)}
     # Validate input
     pattern_input = PatternInput(
         name=name,
@@ -151,9 +164,15 @@ async def add_failure(
     reason_failed: str,
     lesson_learned: str,
     alternative_solution: Optional[str] = None,
-    source_files: Optional[List[str]] = None
+    source_files: Optional[List[str]] = None,
+    source: Optional[str] = None
 ) -> Dict[str, str]:
     """Document what didn't work and why with source tracking."""
+    try:
+        validate_write("Failure", name_fields={"attempt": attempt, "lesson_learned": lesson_learned},
+                       source_files=source_files, source=source)
+    except IngestionRejected as e:
+        return {"status": "rejected", "reason": str(e)}
     # Validate input
     failure_input = FailureInput(
         attempt=attempt,

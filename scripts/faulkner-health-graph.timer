@@ -1,0 +1,14 @@
+[Unit]
+Description=Faulkner-DB Graph Health Check (every 6 hours)
+Documentation=https://github.com/Platano78/faulkner-db
+
+[Timer]
+# Run every 6 hours starting 5 minutes after boot
+OnBootSec=5min
+OnUnitActiveSec=6h
+# Catch up on missed runs if the host was offline
+Persistent=true
+RandomizedDelaySec=120
+
+[Install]
+WantedBy=timers.target
