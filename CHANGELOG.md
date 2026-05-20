@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.1] - 2026-05-20
+
+### Fixed
+
+- **FastMCP wrappers now forward `source="manual"`** on `add_decision`,
+  `add_pattern`, and `add_failure` (`mcp_server/server_fastmcp.py`). The
+  v1.7.0 ingestion guard requires `source` to be `"manual"` or
+  `"reviewed_automated"`, but the MCP boundary stripped the field before
+  calling the impl functions — every MCP-originated write was rejected
+  with `missing_or_invalid_source`. MCP tool calls from a live agent
+  conversation are by definition human-reviewed, so the wrappers now
+  pass `source="manual"` explicitly. Verified end-to-end against all
+  three wrappers after a gateway restart.
+
 ## [1.7.0] - 2026-05-06
 
 ### Removed (mass cleanup)
