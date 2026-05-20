@@ -48,7 +48,7 @@ async def add_decision(
     """Record an architectural decision with full context and reasoning."""
     alternatives = alternatives or []
     related_to = related_to or []
-    return await impl_add_decision(description, rationale, alternatives, related_to)
+    return await impl_add_decision(description, rationale, alternatives, related_to, source="manual")
 
 # Tool 2: Query Decisions
 @mcp.tool()
@@ -69,7 +69,7 @@ async def add_pattern(
 ) -> dict:
     """Store successful implementation pattern."""
     use_cases = use_cases or []
-    return await impl_add_pattern(name, implementation, use_cases, context)
+    return await impl_add_pattern(name, implementation, use_cases, context, source="manual")
 
 # Tool 4: Add Failure
 @mcp.tool()
@@ -80,7 +80,7 @@ async def add_failure(
     alternative_solution: str = None
 ) -> dict:
     """Document what didn't work and lessons learned."""
-    return await impl_add_failure(attempt, reason_failed, lesson_learned, alternative_solution)
+    return await impl_add_failure(attempt, reason_failed, lesson_learned, alternative_solution, source="manual")
 
 # Tool 5: Find Related
 @mcp.tool()
