@@ -30,6 +30,9 @@ import faiss
 # Default semantic similarity threshold: read from env, fallback to 0.85
 _DEFAULT_SEMANTIC_THRESHOLD = float(os.environ.get("SEMANTIC_SIMILARITY_THRESHOLD", "0.85"))
 
+# Maximum number of SEMANTICALLY_SIMILAR edges per source node
+_MAX_SIMILAR_EDGES_PER_NODE = int(os.environ.get("MAX_SIMILAR_EDGES_PER_NODE", "5"))
+
 # Try to import MKG client for LLM enhancement
 try:
     import requests
@@ -52,6 +55,7 @@ class RelationshipExtractor:
             'explicit_references': 0,
             'cross_references': 0,
             'semantic_similarity': 0,
+            'near_duplicates_skipped': 0,
             'hierarchical': 0,
             'llm_enhanced': 0,
             'total_edges_created': 0,
@@ -414,15 +418,26 @@ class RelationshipExtractor:
         k = min(50, len(nodes))  # Top-50 or fewer if less nodes
         similarities, indices = index.search(embeddings.astype('float32'), k)
         
-        # Extract relationships above threshold
+        # Extract relationships above threshold (FAISS results are sorted descending)
         for i, (source_id, similar_scores, similar_indices) in enumerate(zip(node_ids, similarities, indices)):
+            edge_count = 0  # Per-node cap counter
             for score, idx in zip(similar_scores, similar_indices):
                 if idx != i and score >= threshold:  # Exclude self and below threshold
+                    # Near-duplicate guard: skip edges with score >= 0.97
+                    if score >= 0.97:
+                        self.stats['near_duplicates_skipped'] += 1
+                        print(f"  ⚠️  Near-duplicate nodes (score={score:.2f}): {source_id} ~ {node_ids[idx]} — dedup candidates, no edge created")
+                        continue
+                    # Per-node cap
+                    if edge_count >= _MAX_SIMILAR_EDGES_PER_NODE:
+                        break
+                    edge_count += 1
+
                     target_id = node_ids[idx]
-                    
+
                     # Use score as weight (0.7-1.0 range)
                     weight = float(score) * 0.6  # Scale to 0.42-0.6 range
-                    
+
                     relationships.append((source_id, target_id, 'SEMANTICALLY_SIMILAR', weight))
                     self.stats['semantic_similarity'] += 1
         
@@ -707,19 +722,23 @@ Respond ONLY with valid JSON:
         
         return report
     
-    def run(self, semantic_threshold: float = 0.7, output_report: Optional[Path] = None, 
+    def run(self, semantic_threshold: float = None, output_report: Optional[Path] = None, 
             enhance_with_llm: Optional[bool] = None, incremental: bool = False, 
             last_extraction_state: Optional[Path] = None) -> Dict:
         """
         Run the complete relationship extraction pipeline.
         
         Args:
-            semantic_threshold: Minimum similarity score for Layer 3 (default: 0.7)
+            semantic_threshold: Minimum similarity score for Layer 3 (default: SEMANTIC_SIMILARITY_THRESHOLD env or 0.85)
             output_report: Optional path to save extraction report
         
         Returns:
             Extraction statistics report
         """
+        # Fall back to module-level default if not specified
+        if semantic_threshold is None:
+            semantic_threshold = _DEFAULT_SEMANTIC_THRESHOLD
+
         print("\n" + "="*70)
         print("🚀 RELATIONSHIP EXTRACTION PIPELINE")
         print("="*70)
@@ -826,8 +845,8 @@ def main():
     parser.add_argument(
         '--threshold',
         type=float,
-        default=0.7,
-        help='Semantic similarity threshold (0.0-1.0, default: 0.7)'
+        default=None,
+        help='Semantic similarity threshold (0.0-1.0, default: SEMANTIC_SIMILARITY_THRESHOLD env or 0.85)'
     )
     parser.add_argument(
         '--output',
