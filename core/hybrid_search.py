@@ -86,18 +86,8 @@ def query_decomposer(query: str) -> dict:
 
 async def vector_search(query_text: str, top_k: int = 50) -> List[Dict]:
     """Perform vector similarity search using embeddings."""
-    embedding = _get_embedding_model().encode([query_text])
-    # In production, this would query a vector database (FAISS, Pinecone, etc.)
-    # For now, return mock data
-    return [
-        {
-            "content": f"Vector match for '{query_text}'",
-            "score": 0.8,
-            "source": "vector",
-            "timestamp": "2024-08-15T12:00:00Z",
-            "metadata": {"embedding_model": "all-MiniLM-L6-v2"}
-        }
-    ]
+    # Vector search is a no-op until a real vector index exists.
+    return []
 
 async def graph_traversal(client: GraphitiClient, query_keywords: List[str], temporal: dict) -> List[Dict]:
     """Perform graph traversal based on keywords and temporal constraints."""
@@ -267,6 +257,9 @@ async def hybrid_search(query: str, client=None) -> Tuple[List[dict], SearchMetr
     fusion_start = time.time()
     merged = reciprocal_rank_fusion(graph_res, vec_res)
     metrics.fusion_time = time.time() - fusion_start
+    
+    # Filter out results with empty/whitespace-only content
+    merged = [r for r in merged if r.get("content") and str(r.get("content", "")).strip()]
     
     # Step 4: Re-ranking
     rerank_start = time.time()

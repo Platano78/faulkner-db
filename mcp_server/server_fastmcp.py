@@ -54,10 +54,11 @@ async def add_decision(
 @mcp.tool()
 async def query_decisions(
     query: str,
-    timeframe: dict = None
+    timeframe: dict = None,
+    limit: int = 15
 ) -> list[dict]:
-    """Search decisions using hybrid graph+vector search."""
-    return await impl_query_decisions(query, timeframe)
+    """Search decisions using hybrid graph+vector search. limit: max results (1-50, default 15)."""
+    return await impl_query_decisions(query, timeframe, limit)
 
 # Tool 3: Add Pattern
 @mcp.tool()

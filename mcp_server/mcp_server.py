@@ -50,7 +50,8 @@ async def list_tools() -> list[Tool]:
                             "start": {"type": "string", "description": "Start date (ISO format)"},
                             "end": {"type": "string", "description": "End date (ISO format)"}
                         }
-                    }
+                    },
+                    "limit": {"type": "integer", "description": "Maximum number of results to return (1-50, default 15)"}
                 },
                 "required": ["query"]
             }
@@ -139,7 +140,8 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
         elif name == "query_decisions":
             result = await query_decisions(
                 query=arguments["query"],
-                timeframe=arguments.get("timeframe")
+                timeframe=arguments.get("timeframe"),
+                limit=arguments.get("limit", 15)
             )
             formatted = "\n\n".join([
                 f"**Result {i+1}** (score: {r['score']:.3f})\n{r['content']}\nSource: {r['source']} | {r['timestamp']}"

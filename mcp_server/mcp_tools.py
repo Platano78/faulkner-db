@@ -93,9 +93,17 @@ async def add_decision(
 @track_tool
 async def query_decisions(
     query: str,
-    timeframe: Optional[Dict[str, str]] = None
+    timeframe: Optional[Dict[str, str]] = None,
+    limit: int = 15
 ) -> List[Dict[str, Any]]:
-    """Query decisions using hybrid search."""
+    """Query decisions using hybrid search.
+
+    Args:
+        query: Search query string.
+        timeframe: Optional time range with 'start' and 'end' ISO dates.
+        limit: Maximum number of results to return (1-50, default 15).
+    """
+    limit = max(1, min(limit, 50))
     # Build query string with timeframe if provided
     if timeframe:
         query_with_time = f"{query} in {timeframe.get('start', '')} to {timeframe.get('end', '')}"
@@ -113,7 +121,7 @@ async def query_decisions(
             'timestamp': r.get('timestamp', ''),
             'metadata': r.get('metadata', {})
         }
-        for r in results[:15]
+        for r in results[:limit]
     ]
 
 
