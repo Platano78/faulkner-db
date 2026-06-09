@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.2] - 2026-06-09
+
+### Fixed
+
+- **Relationship extractor: sane similarity defaults** (`ingestion/relationship_extractor.py`).
+  A 2026-06-09 graph audit found ~90% of edges were generic similarity glue (5,155
+  SEMANTICALLY_SIMILAR edges across 249 nodes — 60:1 edge:node ratio). Root causes:
+  the `run()` function and `--threshold` CLI flag hardcoded `0.7`, overriding the
+  module-level `SEMANTIC_SIMILARITY_THRESHOLD` env default of `0.85`; FAISS returned
+  up to 50 neighbors per node with no per-node cap; and near-identical pairs created
+  redundant edges instead of being flagged. Fixed:
+  - `run()` and `--threshold` now default to `SEMANTIC_SIMILARITY_THRESHOLD` env
+    (fallback `0.85`) instead of `0.7`.
+  - New `MAX_SIMILAR_EDGES_PER_NODE` env (default `5`) caps similarity edges per
+    source node.
+  - Pairs scoring `>= 0.97` are logged as dedup candidates
+    (`near_duplicates_skipped` in stats) rather than written as edges.
+
+- **`query_decisions` output hygiene** (`core/hybrid_search.py`,
+  `mcp_server/mcp_tools.py`, `mcp_server/server_fastmcp.py`,
+  `mcp_server/mcp_server.py`). Three defects present since the initial
+  vector-search stub:
+  - `vector_search()` fabricated a mock `"Vector match for '<query>'"` result left
+    over from before a real vector index existed; it now returns an empty list until
+    a real index is available.
+  - Graph results with empty or whitespace-only content passed through to output;
+    `hybrid_search()` now filters them after rank fusion.
+  - `query_decisions` accepted no `limit` parameter — callers that passed one
+    received a pydantic `"unexpected keyword argument"` error. Both entry points
+    (`server_fastmcp.py` and `mcp_server.py`) now accept `limit` (clamped 1–50,
+    default `15`).
+
 ## [1.7.1] - 2026-05-20
 
 ### Fixed
