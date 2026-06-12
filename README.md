@@ -188,7 +188,10 @@ Record architectural decision with full context and rationale.
 > (LLM-drafted, human-reviewed). See [Ingestion Guards](#-ingestion-guards-v170).
 
 ### 2. query_decisions
-Hybrid search for decisions by topic/timeframe.
+Hybrid search for decisions by topic/timeframe. Results are scoped to
+`Decision` nodes (the label predicate is pushed into the graph query, so
+selective scoping does not cost recall). `limit` (1-50, default 15) bounds the
+number of reranked results returned.
 
 ```json
 {
@@ -196,7 +199,8 @@ Hybrid search for decisions by topic/timeframe.
   "timeframe": {
     "start": "2024-01-01",
     "end": "2024-12-31"
-  }
+  },
+  "limit": 10
 }
 ```
 
