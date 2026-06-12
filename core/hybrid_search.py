@@ -89,22 +89,29 @@ async def vector_search(query_text: str, top_k: int = 50) -> List[Dict]:
     # Vector search is a no-op until a real vector index exists.
     return []
 
-async def graph_traversal(client: GraphitiClient, query_keywords: List[str], temporal: dict) -> List[Dict]:
-    """Perform graph traversal based on keywords and temporal constraints."""
+async def graph_traversal(client: GraphitiClient, query_keywords: List[str], temporal: dict, node_label: str = None, per_keyword_limit: int = 10) -> List[Dict]:
+    """Perform graph traversal based on keywords and temporal constraints.
+
+    node_label, when set, scopes the search to a single node label (e.g. "Decision")
+    so the predicate is pushed into the Cypher query instead of post-filtering the
+    result set. It is an internal, caller-supplied label (never user input), so it is
+    safe to interpolate.
+    """
     results = []
-    
+    label_clause = f":{node_label}" if node_label else ""
+
     # Query actual FalkorDB nodes with full content
     for keyword in query_keywords[:5]:  # Limit to top keywords
         try:
-            # Use Cypher CONTAINS for text search across all node types
+            # Use Cypher CONTAINS for text search, scoped to node_label when provided
             cypher_query = f'''
-            MATCH (n)
+            MATCH (n{label_clause})
             WHERE (n.description IS NOT NULL AND toLower(n.description) CONTAINS toLower("{keyword}"))
                OR (n.rationale IS NOT NULL AND toLower(n.rationale) CONTAINS toLower("{keyword}"))
                OR (n.implementation IS NOT NULL AND toLower(n.implementation) CONTAINS toLower("{keyword}"))
                OR (n.attempt IS NOT NULL AND toLower(n.attempt) CONTAINS toLower("{keyword}"))
             RETURN n
-            LIMIT 10
+            LIMIT {per_keyword_limit}
             '''
             result = client.db.graph.query(cypher_query)
             
@@ -156,11 +163,12 @@ async def graph_traversal(client: GraphitiClient, query_keywords: List[str], tem
     
     return results
 
-async def parallel_executor(client: GraphitiClient, decomposed_query: dict) -> Tuple[List[Dict], List[Dict]]:
+async def parallel_executor(client: GraphitiClient, decomposed_query: dict, node_label: str = None, top_k: int = 15) -> Tuple[List[Dict], List[Dict]]:
     """Execute graph and vector searches in parallel."""
     tasks = [
-        graph_traversal(client, decomposed_query['keyword'], decomposed_query['temporal']),
-        vector_search(decomposed_query['semantic'])
+        graph_traversal(client, decomposed_query['keyword'], decomposed_query['temporal'],
+                        node_label=node_label, per_keyword_limit=max(top_k, 10)),
+        vector_search(decomposed_query['semantic'], top_k=max(top_k, 50))
     ]
     results = await asyncio.gather(*tasks, return_exceptions=True)
     
@@ -224,16 +232,22 @@ def crossencoder_reranker(query: str, candidates: List[dict], top_k=15) -> List[
     
     return scored_candidates[:top_k]
 
-async def hybrid_search(query: str, client=None) -> Tuple[List[dict], SearchMetrics]:
-    """Main hybrid search function orchestrating all components."""
+async def hybrid_search(query: str, client=None, node_label: str = None, top_k: int = 15) -> Tuple[List[dict], SearchMetrics]:
+    """Main hybrid search function orchestrating all components.
+
+    node_label scopes the search to a single node label (pushed into the graph query);
+    top_k bounds how many reranked results are returned. Both are part of the cache key
+    so scoped and unscoped queries with the same text do not collide.
+    """
     metrics = SearchMetrics()
     start_time = time.time()
-    
+
     # Check cache
-    if query in CACHE:
+    cache_key = (query, node_label, top_k)
+    if cache_key in CACHE:
         metrics.cache_hits += 1
         metrics.total_time = time.time() - start_time
-        return CACHE[query], metrics
+        return CACHE[cache_key], metrics
     
     metrics.cache_misses += 1
     
@@ -248,7 +262,7 @@ async def hybrid_search(query: str, client=None) -> Tuple[List[dict], SearchMetr
     
     # Step 2: Parallel Execution
     search_start = time.time()
-    graph_res, vec_res = await parallel_executor(client, decomposed)
+    graph_res, vec_res = await parallel_executor(client, decomposed, node_label=node_label, top_k=top_k)
     metrics.search_time = time.time() - search_start
     metrics.graph_results_count = len(graph_res)
     metrics.vector_results_count = len(vec_res)
@@ -263,7 +277,7 @@ async def hybrid_search(query: str, client=None) -> Tuple[List[dict], SearchMetr
     
     # Step 4: Re-ranking
     rerank_start = time.time()
-    final_results = crossencoder_reranker(decomposed['semantic'], merged, top_k=15)
+    final_results = crossencoder_reranker(decomposed['semantic'], merged, top_k=top_k)
     metrics.reranking_time = time.time() - rerank_start
     
     # Calculate total time
@@ -274,6 +288,6 @@ async def hybrid_search(query: str, client=None) -> Tuple[List[dict], SearchMetr
         print(f"[WARNING] Search took {metrics.total_time:.2f}s, exceeds 2s target", file=sys.stderr)
     
     # Cache result
-    CACHE[query] = final_results
+    CACHE[cache_key] = final_results
     
     return final_results, metrics

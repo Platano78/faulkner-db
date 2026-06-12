@@ -110,8 +110,8 @@ async def query_decisions(
     else:
         query_with_time = query
     
-    # Execute hybrid search
-    results, metrics = await hybrid_search(query_with_time, _get_client())
+    # Execute hybrid search, scoped to Decision nodes and honoring the requested limit
+    results, metrics = await hybrid_search(query_with_time, _get_client(), node_label="Decision", top_k=limit)
     
     return [
         {
