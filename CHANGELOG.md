@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.3] - 2026-06-12
+
+### Fixed
+
+- **`query_decisions` now scopes to `Decision` nodes and honors `limit`**
+  (`core/hybrid_search.py`, `mcp_server/mcp_tools.py`). Two defects survived the
+  v1.7.2 hygiene pass:
+  - **No label scoping.** `graph_traversal()` issued `MATCH (n) WHERE
+    n.description CONTAINS ...` across *every* node label, so `query_decisions`
+    searched the whole graph — curated `Decision` nodes competed for slots
+    against `Pattern`/`Failure` nodes (the ~90% similarity-glue noise reduced in
+    v1.7.2 still diluted the decisions lane). The label predicate is now pushed
+    into the Cypher query: `graph_traversal()`, `parallel_executor()`, and
+    `hybrid_search()` accept a `node_label` argument, and `query_decisions`
+    passes `node_label="Decision"`. Filtering happens *in* the search, not as a
+    post-filter on the result set, so selective scoping no longer costs recall.
+  - **`limit` was capped at 15.** `hybrid_search()` hardcoded `top_k=15` in the
+    cross-encoder reranker, so `query_decisions(limit=50)` silently returned
+    ≤15. `top_k` is now threaded end-to-end (call site → `hybrid_search` →
+    `parallel_executor` → per-keyword Cypher `LIMIT`), and the reranker honors
+    the requested `limit`.
+  - The in-memory result `CACHE` is now keyed on `(query, node_label, top_k)`
+    instead of `query` alone, so scoped and unscoped searches with the same text
+    no longer collide.
+
 ## [1.7.2] - 2026-06-09
 
 ### Fixed
