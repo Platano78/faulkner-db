@@ -4,8 +4,8 @@ from datetime import datetime
 
 
 class DecisionInput(BaseModel):
-    description: str = Field(..., min_length=10, max_length=1000)
-    rationale: str = Field(..., min_length=20, max_length=2000)
+    description: str = Field(..., min_length=10, max_length=2000)
+    rationale: str = Field(..., min_length=20, max_length=5000)
     alternatives: List[str] = Field(default_factory=list)
     related_to: List[str] = Field(default_factory=list)
 
