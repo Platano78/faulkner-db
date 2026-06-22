@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.4] - 2026-06-22
+
+### Changed
+
+- **Decision input ceilings raised: `description` 1000 → 2000, `rationale`
+  2000 → 5000.** The old caps were too tight for rich architectural decisions
+  (which routinely landed at ~1100–1300 chars and were rejected before any
+  write) and were schema-level `Field(max_length)` constraints, not limits of
+  the underlying FalkorDB/Postgres storage. The new ceilings are applied in
+  lockstep to **both** Pydantic gates that `add_decision` runs through — the
+  `DecisionInput` input model (`common/schemas.py`) and the `Decision` storage
+  model (`core/knowledge_types.py`), which re-validates on construct with the
+  identical cap. Raising only one would move the `string_too_long` failure from
+  the input gate to the storage gate without removing it. The unused duplicate
+  `mcp_server/schemas.py` is bumped too for consistency. `description` is kept
+  tighter (2000) than `rationale` (5000) by design: it is the field embedded for
+  semantic decision-search, where an over-long description dilutes the vector and
+  degrades retrieval.
+
+### Fixed
+
+- **`AGENTS.md` routing corrected.** The MCP-tools row had listed the dead,
+  imported-by-nobody `mcp_server/schemas.py` as the live schema input and placed
+  the live `mcp_server/mcp_tools.py` in the Skip column as legacy — the exact
+  mis-routing that points decision-cap/validation work at a no-op file. It now
+  points at the real live chain: `server_fastmcp.py` → `mcp_tools.py` →
+  `common/schemas.py` + `core/knowledge_types.py`.
+
 ## [1.7.3] - 2026-06-12
 
 ### Fixed
