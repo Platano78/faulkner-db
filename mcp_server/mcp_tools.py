@@ -1,7 +1,9 @@
 import collections
+import json
 import sys
-from typing import List, Dict, Any, Optional
-from datetime import datetime
+from pathlib import Path
+from typing import List, Dict, Any, Optional, Tuple
+from datetime import datetime, timezone
 from uuid import uuid4
 
 from common import schemas
@@ -19,6 +21,52 @@ from mcp_server.ingestion_guards import validate_write, IngestionRejected
 _client = None
 _gap_detector = None
 _networkx_analyzer = None
+
+# --- Overflow capture (clamp-and-preserve for over-cap tool inputs) ---
+
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent
+_OVERFLOW_LOG = _PROJECT_ROOT / "data" / "overflow_capture.jsonl"
+_TRUNCATION_MARKER = " …[truncated]"
+
+
+def _max_len(model, field_name: str) -> int:
+    """Read the max_length constraint straight off a schema field, so the
+    clamp logic can never drift from the Pydantic cap it protects."""
+    for constraint in model.model_fields[field_name].metadata:
+        if hasattr(constraint, "max_length") and constraint.max_length is not None:
+            return constraint.max_length
+    raise ValueError(f"{model.__name__}.{field_name} has no max_length constraint")
+
+
+def _capture_overflow(tool: str, field: str, full_text: str) -> None:
+    """Append the full, un-truncated text to the overflow log. Never raises."""
+    try:
+        _OVERFLOW_LOG.parent.mkdir(parents=True, exist_ok=True)
+        record = {
+            "ts": datetime.now(timezone.utc).isoformat(),
+            "tool": tool,
+            "field": field,
+            "full_text": full_text,
+        }
+        with open(_OVERFLOW_LOG, "a", encoding="utf-8") as f:
+            f.write(json.dumps(record) + "\n")
+    except Exception as e:
+        print(f"Warning: could not write overflow_capture.jsonl: {e}", file=sys.stderr)
+
+
+def _clamp_and_capture(tool: str, field: str, value: Optional[str], max_length: int) -> Tuple[Optional[str], Optional[str]]:
+    """Clamp `value` to `max_length` if it exceeds the cap, preserving the
+    full original text in data/overflow_capture.jsonl. Returns (value, warning)."""
+    if value is None or len(value) <= max_length:
+        return value, None
+    original_len = len(value)
+    truncated = value[: max_length - len(_TRUNCATION_MARKER)] + _TRUNCATION_MARKER
+    _capture_overflow(tool, field, value)
+    warning = (
+        f"{field} truncated {original_len}→{max_length} chars; "
+        f"full text preserved in data/overflow_capture.jsonl"
+    )
+    return truncated, warning
 
 def _get_client():
     global _client
@@ -54,6 +102,17 @@ async def add_decision(
                        source_files=source_files, source=source)
     except IngestionRejected as e:
         return {"status": "rejected", "reason": str(e)}
+
+    # Clamp-and-preserve: over-cap inputs are truncated (not rejected); the
+    # full original text is archived to data/overflow_capture.jsonl.
+    warnings: List[str] = []
+    description, w = _clamp_and_capture("add_decision", "description", description, _max_len(DecisionInput, "description"))
+    if w:
+        warnings.append(w)
+    rationale, w = _clamp_and_capture("add_decision", "rationale", rationale, _max_len(DecisionInput, "rationale"))
+    if w:
+        warnings.append(w)
+
     # Validate input
     decision_input = DecisionInput(
         description=description,
@@ -61,7 +120,7 @@ async def add_decision(
         alternatives=alternatives,
         related_to=related_to
     )
-    
+
     # Create Decision model
     decision_id = f"D-{uuid4().hex[:8]}"
     decision = Decision(
@@ -72,7 +131,7 @@ async def add_decision(
         related_to=decision_input.related_to,
         source_files=source_files or []
     )
-    
+
     # Store in graph
     client = _get_client()
     client.add_node(decision)
@@ -87,7 +146,10 @@ async def add_decision(
 
     knowledge_growth['decisions'] += 1
 
-    return {"decision_id": decision_id, "status": "created"}
+    result = {"decision_id": decision_id, "status": "created"}
+    if warnings:
+        result["warning"] = "; ".join(warnings)
+    return result
 
 
 @track_tool
@@ -181,6 +243,23 @@ async def add_failure(
                        source_files=source_files, source=source)
     except IngestionRejected as e:
         return {"status": "rejected", "reason": str(e)}
+
+    # Clamp-and-preserve: over-cap inputs are truncated (not rejected); the
+    # full original text is archived to data/overflow_capture.jsonl.
+    warnings: List[str] = []
+    attempt, w = _clamp_and_capture("add_failure", "attempt", attempt, _max_len(FailureInput, "attempt"))
+    if w:
+        warnings.append(w)
+    reason_failed, w = _clamp_and_capture("add_failure", "reason_failed", reason_failed, _max_len(FailureInput, "reason_failed"))
+    if w:
+        warnings.append(w)
+    lesson_learned, w = _clamp_and_capture("add_failure", "lesson_learned", lesson_learned, _max_len(FailureInput, "lesson_learned"))
+    if w:
+        warnings.append(w)
+    alternative_solution, w = _clamp_and_capture("add_failure", "alternative_solution", alternative_solution, _max_len(FailureInput, "alternative_solution"))
+    if w:
+        warnings.append(w)
+
     # Validate input
     failure_input = FailureInput(
         attempt=attempt,
@@ -188,7 +267,7 @@ async def add_failure(
         lesson_learned=lesson_learned,
         alternative_solution=alternative_solution
     )
-    
+
     # Create Failure model
     failure_id = f"F-{uuid4().hex[:8]}"
     failure = Failure(
@@ -199,12 +278,15 @@ async def add_failure(
         alternative_solution=failure_input.alternative_solution,
         source_files=source_files or []
     )
-    
+
     # Store in graph
     _get_client().add_node(failure)
     knowledge_growth['failures'] += 1
-    
-    return {"failure_id": failure_id, "status": "created"}
+
+    result = {"failure_id": failure_id, "status": "created"}
+    if warnings:
+        result["warning"] = "; ".join(warnings)
+    return result
 
 
 @track_tool

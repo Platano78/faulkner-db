@@ -50,6 +50,45 @@ async def add_decision(
     related_to = related_to or []
     return await impl_add_decision(description, rationale, alternatives, related_to, source="manual")
 
+# Tool 1b: Add Decision (single-parameter JSON variant)
+@mcp.tool()
+async def add_decision_json(payload: str) -> dict:
+    """Record an architectural decision from a single JSON string payload.
+
+    Use this variant when a normal add_decision call fails with 'rationale
+    Missing required argument' — that is a tool-call parsing issue with long
+    multiline parameters; passing one JSON string avoids it.
+
+    payload must be a JSON object with keys: description (required, str),
+    rationale (required, str), alternatives (optional, list[str]),
+    related_to (optional, list[str]).
+    """
+    import json
+    from pydantic import ValidationError
+
+    try:
+        data = json.loads(payload)
+    except json.JSONDecodeError as e:
+        return {"status": "error", "reason": f"invalid JSON payload: {e}"}
+
+    if not isinstance(data, dict):
+        return {"status": "error", "reason": "payload must be a JSON object"}
+
+    description = data.get("description")
+    rationale = data.get("rationale")
+    if not description or not rationale:
+        return {"status": "error", "reason": "payload must include non-empty 'description' and 'rationale'"}
+
+    alternatives = data.get("alternatives") or []
+    related_to = data.get("related_to") or []
+
+    try:
+        return await impl_add_decision(description, rationale, alternatives, related_to, source="manual")
+    except ValidationError as e:
+        first = e.errors()[0]
+        field = ".".join(str(part) for part in first["loc"])
+        return {"status": "error", "reason": f"validation failed: {field}: {first['msg']}"}
+
 # Tool 2: Query Decisions
 @mcp.tool()
 async def query_decisions(
