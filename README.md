@@ -152,23 +152,52 @@ If you need to clear data during development, recreate the container with a fres
 
 ## 🏗️ Architecture
 
+```mermaid
+flowchart LR
+    subgraph clients["MCP Clients"]
+        CC["Claude Code / Desktop"]
+        AG["Agentic coders"]
+        HM["Consumer agents<br/>(e.g. Hermes)"]
+    end
+
+    subgraph server["Faulkner DB — FastMCP server (13 tools)"]
+        TOOLS["Write: add_decision · add_decision_json<br/>add_pattern · add_failure"]
+        QUERY["Query: query_decisions · query_patterns_semantic<br/>find_related · get_timeline"]
+        ANALYSIS["Structural analysis (NetworkX):<br/>detect_gaps · find_bridge_patterns<br/>find_influential_patterns · find_knowledge_communities<br/>get_graph_summary"]
+        HS["Hybrid search:<br/>graph + vector + reranking"]
+    end
+
+    subgraph storage["Storage"]
+        FK[("FalkorDB<br/>temporal knowledge graph")]
+        CH[("ChromaDB<br/>embeddings")]
+        PG[("PostgreSQL<br/>metadata")]
+    end
+
+    CC & AG & HM -->|"MCP (HTTP gateway)"| server
+    TOOLS --> FK
+    QUERY --> HS
+    HS --> FK & CH
+    ANALYSIS --> FK
+    server --> PG
 ```
-┌─────────────────────┐    ┌─────────────────────┐    ┌─────────────────────┐
-│   Claude Code/      │    │   Faulkner DB       │    │     FalkorDB        │
-│   Desktop           │───▶│   (MCP Server)      │───▶│   (Graph DB)        │
-│                     │    │   Temporal Logic     │    │   CPU-Friendly      │
-└─────────────────────┘    └─────────────────────┘    └─────────────────────┘
-         │                          │                           │
-         │                          │                           │
-         ▼                          ▼                           ▼
-┌─────────────────────┐    ┌─────────────────────┐    ┌─────────────────────┐
-│   12 MCP Tools      │    │   Hybrid Search      │    │   PostgreSQL        │
-│   - add_decision    │    │   Graph + Vector     │    │   (Metadata Store)  │
-│   - query_decisions │    │   + Reranking        │    │                     │
-│   - detect_gaps     │    │                      │    │                     │
-│   - get_timeline    │    │                      │    │                     │
-│   - graph_summary   │    │                      │    │                     │
-└─────────────────────┘    └─────────────────────┘    └─────────────────────┘
+
+### Knowledge graph data model
+
+Three node types connected by typed, timestamped edges — the temporal record of *what
+was decided, what patterns emerged, and what failed*:
+
+```mermaid
+graph LR
+    D["Decision<br/>description · rationale · alternatives"]
+    P["Pattern<br/>recurring approach"]
+    F["Failure<br/>what went wrong"]
+
+    D -->|RELATES_TO / REFERENCES| D
+    P -->|IMPLEMENTS| D
+    D -->|ADDRESSES / SOLVES| F
+    D -->|CONTRADICTS / ALTERNATIVE_TO| D
+    P -->|EXTENDS| P
+    P -.->|SEMANTICALLY_SIMILAR| P
 ```
 
 ## 📚 MCP Tools Documentation
