@@ -22,7 +22,7 @@ containers (FalkorDB + Postgres + ChromaDB) on host `ai-utility`. **The live ser
 | **Structural graph analysis** (gaps/bridges/communities/influence) | `core/gap_detector.py` (GapDetector, GapType, Severity, GapReport), `mcp_server/networkx_analyzer.py` | search/storage dirs |
 | **Ingestion / bulk import** (agent-genesis, chromadb extraction) | `ingestion/` (`agent_genesis_*.py`, chromadb extractor scripts), `mcp_server/ingestion_guards.py` | `ingestion/*.log`, `ingestion/*_checkpoint.json` |
 | **Deploy / Docker / infra** | `docker/docker-compose.yml`, `docker/Dockerfile`, `docker/redis.conf`, `config/graphiti_config.yaml`, `config/mcp_config.json` | `docker/data/`, `docker/backups/`, source dirs |
-| **Ops / health / migrations / sync** | `scripts/` (`health_check.py`, `backup-faulkner.sh`, `daily_sync.sh`, `migrate_*.py`, `faulkner-health-graph.{service,timer}`) | `logs/` |
+| **Ops / health / migrations / sync** | `scripts/` (`health_check.py`, `backup-faulkner.sh`, `migrate_*.py`, `faulkner-health-graph.{service,timer}`) | `logs/` |
 | **Tests** | `tests/`, `comprehensive_mcp_test.py` (root) | source dirs unless tracing a failure |
 
 ## Verbs
