@@ -33,6 +33,9 @@
 
 ## 🚀 Quick Start
 
+**Installation**: see [INSTALL.md](INSTALL.md) for setup instructions covering humans,
+agentic coders, and MCP-consumer agents.
+
 ### Option 1: Automated NPM Setup (Recommended)
 
 ```bash
