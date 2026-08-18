@@ -4,7 +4,7 @@
 # FalkorDB Connection
 # Password can also be set via FALKORDB_PASSWORD env var (takes priority)
 falkordb:
-  host: localhost
+  host: 192.168.1.79  # ai-utility — the live stack host (FALKORDB_HOST env var overrides)
   port: 6380
   database: 0
   password: null  # Set via FALKORDB_PASSWORD env var
@@ -15,7 +15,7 @@ falkordb:
 # SECURITY: Use environment variables for credentials in production
 # Set POSTGRES_PASSWORD environment variable before running
 postgres:
-  host: localhost
+  host: 192.168.1.79  # ai-utility — the live stack host
   port: 5432
   database: graphiti
   user: graphiti
