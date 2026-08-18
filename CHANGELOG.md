@@ -5,6 +5,47 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.0] - 2026-08-18
+
+### Added
+
+- **`add_decision_json` tool (13th tool)** — records a decision from a single JSON
+  string payload, routing around client-side tool-call parsers that drop a second
+  parameter on long/multiline values.
+- **Clamp-and-preserve on `add_decision` / `add_failure`** — over-length text is
+  never rejected: it is clamped to the schema caps and the full original preserved
+  to `data/overflow_capture.jsonl`.
+- **`INSTALL.md`** — installation guide with three self-contained lanes: humans,
+  agentic coders (AGENTS.md routing + machine-checkable gates + MCP registration),
+  and MCP-consumer agents connecting to the gateway.
+- README architecture and knowledge-graph data-model diagrams (Mermaid, replacing
+  the stale ASCII art).
+
+### Fixed
+
+- **`scripts/backup-faulkner.sh` rewritten remote-first.** Since the stack moved to
+  a remote Docker host, the nightly backup had silently archived a months-old local
+  RDB and empty postgres dumps while logging success. It now triggers `BGSAVE` over
+  ssh, polls `LASTSAVE`, streams the RDB, and verifies size + `REDIS` magic bytes —
+  hard-failing the FalkorDB lane on any mismatch. Uses a dedicated agentless deploy
+  key (`~/.config/faulkner-health/ssh_key`, `FAULKNER_SSH_KEY` override) because
+  cron has no ssh-agent; the password is shell-quoted before crossing ssh's
+  argument flattening.
+- **`scripts/health-check-faulkner.sh` rewritten for the remote host** — remote
+  reachability probe (no restart storms), remote container checks/starts, and a
+  redis `PING` over ssh, instead of erroring every 5 minutes against a local
+  docker daemon that no longer runs the stack.
+- `config/graphiti_config.yaml` now points at the live stack host instead of
+  `localhost` (env vars still take priority).
+- Documentation counts corrected to the live 13-tool surface (README, QUICKSTART,
+  TECH_STACK); USAGE_GUIDE's early validation report marked as historical.
+
+### Removed
+
+- `scripts/daily_sync.sh` — superseded legacy ingestion lane (its ingestion branch
+  was a placeholder); the live daily pipeline is the Agent Genesis sync's
+  incremental Faulkner relationship extractor plus the remote maintenance timer.
+
 ## [1.7.4] - 2026-06-22
 
 ### Changed

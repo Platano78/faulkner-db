@@ -187,7 +187,7 @@ psql -h localhost -U graphiti -d graphiti -c "SELECT 1"
 - ✅ **Temporal Queries**: Track decisions over time
 - ✅ **Hybrid Search**: Graph + vector + reranking
 - ✅ **Gap Detection**: NetworkX structural analysis
-- ✅ **MCP Integration**: 7 tools for Claude Desktop
+- ✅ **MCP Integration**: 13 tools for Claude Desktop/Code
 - ✅ **Docker Deployment**: One-command startup
 - ✅ **CPU-Only**: Gaming-friendly, no GPU required
 

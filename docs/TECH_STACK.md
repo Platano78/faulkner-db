@@ -21,7 +21,7 @@
 | Component | Framework | Purpose | Port |
 |-----------|-----------|---------|------|
 | **Visualization API** | FastAPI | REST endpoints for graph queries | 8082 |
-| **MCP Server** | FastMCP | Claude Desktop integration (7 tools) | N/A |
+| **MCP Server** | FastMCP | Claude Desktop integration (13 tools) | N/A |
 | **WebSocket Server** | FastAPI | Real-time updates (future) | 8082 |
 
 ### FastAPI Endpoints

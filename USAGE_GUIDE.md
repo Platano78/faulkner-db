@@ -126,6 +126,9 @@ curl http://localhost:8000/health
 
 ## Current System Status
 
+> **Historical snapshot** from the initial validation run — the current server exposes
+> 13 fully functional MCP tools (see README / INSTALL.md for the live surface).
+
 **Validated Components:**
 - ✅ Docker services (FalkorDB + PostgreSQL)
 - ✅ Virtual environment with all dependencies

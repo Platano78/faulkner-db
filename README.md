@@ -22,7 +22,7 @@
 - **Temporal Knowledge Graph** - Track changes to decisions and patterns over time
 - **Hybrid Search** - Graph traversal + vector embeddings + CrossEncoder reranking (<2s queries)
 - **Gap Detection** - NetworkX-based structural analysis to identify knowledge gaps
-- **MCP Integration** - 12 tools for seamless Claude Desktop/Code integration
+- **MCP Integration** - 13 tools for seamless Claude Desktop/Code integration
 - **Docker Deployment** - One-command startup with auto-restart support
 - **CPU-Friendly** - Built on FalkorDB, no GPU required (gaming-friendly memory footprint)
 
